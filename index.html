@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pho Bò</title>
+<meta name="theme-color" content="#fbf6ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1613" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pho Bò">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #fbf6ee;
+    --card: #ffffff;
+    --ink: #2a211b;
+    --muted: #7a6a5d;
+    --line: #eadfce;
+    --accent: #b4412a;
+    --accent-ink: #ffffff;
+    --accent-soft: #f6e1d9;
+    --ok: #4d7a3c;
+    --ok-soft: #e3eedb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1613;
+      --card: #272019;
+      --ink: #f3e9dc;
+      --muted: #a8998a;
+      --line: #3a3027;
+      --accent: #e0674d;
+      --accent-ink: #1b1613;
+      --accent-soft: #3d2a23;
+      --ok: #8fbf79;
+      --ok-soft: #2b3626;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font: 17px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    min-height: 100vh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+    -webkit-user-select: none; user-select: none;
+  }
+  header { padding: 18px 20px 6px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  h1 { font: 700 30px/1.1 ui-serif, "New York", Georgia, serif; margin: 0; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .awake {
+    flex: none; border: 1px solid var(--line); background: var(--card); color: var(--muted);
+    border-radius: 999px; padding: 7px 12px; font: 600 13px/1 inherit; cursor: pointer;
+  }
+  .awake[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  main { padding: 8px 16px 24px; max-width: 640px; margin: 0 auto; }
+  section[hidden] { display: none; }
+
+  .progress { margin: 8px 4px 16px; }
+  .bar { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s; }
+  .progress small { color: var(--muted); font-size: 13px; display: block; margin-top: 6px; }
+
+  .group { background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
+  .group h2 {
+    margin: 0; padding: 12px 16px 8px; font-size: 13px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--accent);
+  }
+  .row {
+    display: flex; align-items: flex-start; gap: 14px; padding: 12px 16px; border-top: 1px solid var(--line);
+    cursor: pointer; width: 100%; text-align: left; background: none; border-left: 0; border-right: 0; border-bottom: 0;
+    color: inherit; font: inherit;
+  }
+  .group h2 + .row { border-top: 0; }
+  .box {
+    flex: none; width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--line);
+    display: grid; place-items: center; margin-top: 1px; transition: .12s;
+  }
+  .box svg { width: 16px; height: 16px; opacity: 0; stroke: var(--accent-ink); }
+  .row[aria-checked="true"] .box { background: var(--accent); border-color: var(--accent); }
+  .row[aria-checked="true"] .box svg { opacity: 1; }
+  .row[aria-checked="true"] .txt { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--muted); }
+  .opt { color: var(--muted); font-size: 14px; }
+
+  .step { background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
+  .step.done { opacity: .6; }
+  .step-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px 10px; }
+  .num {
+    flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink);
+    display: grid; place-items: center; font-weight: 700; font-size: 15px;
+  }
+  .step.done .num { background: var(--ok); }
+  .step-head h2 { margin: 0; font: 700 19px/1.2 ui-serif, "New York", Georgia, serif; }
+  .tip { margin: 4px 16px 14px; padding: 10px 12px; background: var(--accent-soft); border-radius: 10px; font-size: 15px; }
+  .tip b { color: var(--accent); }
+
+  .timer {
+    margin-top: 8px; display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--accent);
+    color: var(--accent); background: transparent; border-radius: 999px; padding: 8px 14px;
+    font: 600 15px/1 inherit; font-variant-numeric: tabular-nums; cursor: pointer;
+  }
+  .timer.running { background: var(--accent); color: var(--accent-ink); }
+  .timer.finished { background: var(--ok); border-color: var(--ok); color: #fff; animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { transform: scale(1.04); } }
+  .timer-wrap { display: block; }
+
+  .final { text-align: center; font: 700 22px/1.2 ui-serif, Georgia, serif; padding: 18px 0 6px; }
+  .reset {
+    display: block; margin: 18px auto 0; background: none; border: 0; color: var(--muted);
+    font: 500 15px/1 inherit; padding: 12px; cursor: pointer; text-decoration: underline;
+  }
+
+  nav {
+    position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: var(--card);
+    border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom);
+  }
+  nav button {
+    flex: 1; background: none; border: 0; padding: 10px 0 8px; color: var(--muted);
+    font: 600 12px/1.2 inherit; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer;
+  }
+  nav button span { font-size: 22px; line-height: 1; }
+  nav button[aria-selected="true"] { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Pho Bò</h1>
+    <div class="sub">Rezept von Sarahs Tante, New York</div>
+  </div>
+  <button class="awake" id="awake" aria-pressed="false">Display an</button>
+</header>
+
+<main>
+  <section id="tab-zutaten"></section>
+  <section id="tab-schritte" hidden></section>
+</main>
+
+<nav role="tablist">
+  <button role="tab" aria-selected="true" data-tab="zutaten"><span>🛒</span>Zutaten</button>
+  <button role="tab" aria-selected="false" data-tab="schritte"><span>🍲</span>Zubereitung</button>
+</nav>
+
+<script>
+"use strict";
+
+/* ---------- Inhalt ---------- */
+const INGREDIENTS = [
+  { title: "Brühe", items: [
+    "Rindersuppenknochen (Mark- und Gelenkknochen)",
+    "Rinderhalsknochen",
+    "Ochsenschwanz",
+    "Short Ribs mit Knochen",
+    "Brust (Brisket)",
+    "Flanke",
+    "Short Ribs ohne Knochen",
+    "Rinderschulter (Chuck Roast)",
+  ]},
+  { title: "Fleisch-Toppings", items: [
+    "Eye of Round, Sirloin oder Ribeye (roh, dünn geschnitten)",
+    "Rindfleischbällchen (bò viên) <span class='opt'>optional</span>",
+    "Rindersehnen <span class='opt'>optional</span>",
+    "Rindermagen / Kutteln <span class='opt'>optional</span>",
+  ]},
+  { title: "Nudeln", items: [
+    "Flache Reisnudeln (bánh phở), getrocknet oder frisch",
+  ]},
+  { title: "Aromaten", items: [
+    "Gelbe Zwiebeln und/oder Schalotten",
+    "Ingwer",
+  ]},
+  { title: "Pho-Gewürze", items: [
+    "Saigon-Zimt <span class='opt'>(sonst normale Zimtstangen)</span>",
+    "Sternanis",
+    "Nelken",
+    "Kardamom",
+    "Koriandersamen",
+    "Fenchelsamen",
+  ]},
+  { title: "Würzung", items: [
+    "Salz",
+    "Zucker (Kristall- oder Kandiszucker)",
+    "Fischsauce",
+    "Brühpulver <span class='opt'>optional</span>",
+    "Glutamat (MSG) <span class='opt'>optional</span>",
+  ]},
+  { title: "Garnitur & Beilagen", items: [
+    "Gelbe Zwiebeln, dünn geschnitten",
+    "Frühlingszwiebeln",
+    "Koriandergrün",
+    "Thai-Basilikum <span class='opt'>optional</span>",
+    "Sojabohnensprossen <span class='opt'>optional</span>",
+    "Limettenspalten <span class='opt'>optional</span>",
+  ]},
+  { title: "Saucen", items: [
+    "Hoisin-Sauce",
+    "Sriracha oder andere Chilisauce",
+  ]},
+];
+
+const STEPS = [
+  { title: "Knochen und Fleisch vorbereiten", items: [
+    { t: "Knochen in einen großen Topf geben (mind. 8 Quarts, ca. 7,5 Liter)." },
+    { t: "Mit Wasser bedecken und zum Kochen bringen (dauert etwa 15 Minuten).", timer: ["Aufkochen", 15*60] },
+    { t: "Etwa 2 Minuten kochen, bis graue Unreinheiten aufsteigen. Nicht zu lange, sonst geht das Mark verloren.", timer: ["Abkochen", 2*60] },
+    { t: "Knochen herausnehmen und gründlich abspülen. Topf auswaschen und zurück auf den Herd stellen." },
+  ]},
+  { title: "Aromaten rösten", items: [
+    { t: "Zwiebeln und Ingwer vorbereiten und rösten, bis sie duften und dunkel geworden sind." },
+    { t: "Über offener Flamme (traditionell) oder in Heißluftfritteuse bzw. Toastofen (modern)." },
+  ]},
+  { title: "Gewürze rösten", items: [
+    { t: "Pho-Gewürze in einer kleinen Pfanne ohne Öl leicht anrösten, bis sie duften." },
+    { t: "In ein Baumwolltuch (Gaze) oder einen Gewürzbeutel binden. Alternativ lose in den Topf geben." },
+  ], tip: "Statt alle Gewürze einzeln zu kaufen, gibt es fertige Pho-Gewürzbeutel." },
+  { title: "Rinderbrühe kochen", items: [
+    { t: "Vorgekochte Knochen, rohes Fleisch, geröstete Aromaten und Gewürze in den Topf geben." },
+    { t: "Mit Wasser auffüllen, aufkochen, dann auf kleine Hitze schalten und sanft simmern lassen." },
+    { t: "Etwa 3 Stunden köcheln lassen.", timer: ["Köcheln", 3*3600] },
+    { t: "Nach der ersten Stunde Unreinheiten abschöpfen und wegwerfen. Mitabgeschöpfte Gewürze sind kein Problem." },
+    { t: "Reine Fleischstücke herausnehmen, sobald sie stäbchenzart sind (ca. 45 Minuten).", timer: ["Fleisch", 45*60] },
+    { t: "Größere Short Ribs mit Knochen nach ca. 1 Std. 45 Min. herausnehmen.", timer: ["Short Ribs", 105*60] },
+    { t: "Knochen zurück in den Topf geben und weiterköcheln lassen." },
+    { t: "Fleisch kalt stellen oder in Eiswasser legen. Danach dünn aufschneiden und als Topping beiseitelegen." },
+  ]},
+  { title: "Abseihen und Fett abschöpfen", items: [
+    { t: "Alle festen Bestandteile abseihen, bis eine klare Brühe übrig bleibt." },
+    { t: "Die gesamte Oberfläche abschöpfen, um überschüssiges Fett zu entfernen." },
+  ]},
+  { title: "Brühe würzen", items: [
+    { t: "Würzzutaten nach und nach hinzufügen und abschmecken." },
+  ], tip: "Die Brühe soll ausgewogen, herzhaft und leicht süßlich sein." },
+  { title: "Nudeln und Toppings vorbereiten", items: [
+    { t: "Reisnudeln nach Packungsanleitung kochen, abspülen und gut abtropfen lassen." },
+  ], tip: "Wird sofort serviert, alle Nudeln auf einmal kochen. Sonst jeweils eine Handvoll pro Schüssel." },
+  { title: "Schüsseln anrichten", items: [
+    { t: "Nudeln und aufgeschnittenes gegartes Fleisch in die Schüssel geben." },
+    { t: "Rohe Rindfleischscheiben obenauf legen (falls verwendet)." },
+    { t: "Heiße Brühe darübergießen." },
+    { t: "Mit Zwiebeln, Frühlingszwiebeln, Koriandergrün und Limette toppen." },
+  ]},
+];
+
+/* ---------- Zustand (lokal gespeichert) ---------- */
+const KEY = "pho.v1";
+let S = { ing: {}, step: {}, timers: {}, tab: "zutaten" };
+try { S = Object.assign(S, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+const CHECK = '<svg viewBox="0 0 16 16" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+const $ = (s, r = document) => r.querySelector(s);
+
+/* ---------- Zutaten ---------- */
+function renderIngredients() {
+  const total = INGREDIENTS.reduce((n, g) => n + g.items.length, 0);
+  const done = Object.values(S.ing).filter(Boolean).length;
+  let h = `<div class="progress"><div class="bar"><i style="width:${total ? done / total * 100 : 0}%"></i></div>
+           <small>${done} von ${total} abgehakt</small></div>`;
+  INGREDIENTS.forEach((g, gi) => {
+    h += `<div class="group"><h2>${g.title}</h2>`;
+    g.items.forEach((it, ii) => {
+      const id = `i${gi}-${ii}`;
+      h += `<button class="row" role="checkbox" aria-checked="${!!S.ing[id]}" data-ing="${id}">
+              <span class="box">${CHECK}</span><span class="txt">${it}</span></button>`;
+    });
+    h += `</div>`;
+  });
+  h += `<button class="reset" data-reset="ing">Zutaten zurücksetzen</button>`;
+  $("#tab-zutaten").innerHTML = h;
+}
+
+/* ---------- Zubereitung ---------- */
+function fmt(sec) {
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  const mm = String(m).padStart(h ? 2 : 1, "0"), ss = String(s).padStart(2, "0");
+  return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+function timerHTML(id, label, dur) {
+  const t = S.timers[id];
+  if (t && t.done) return `<button class="timer finished" data-timer="${id}">✓ ${label} fertig</button>`;
+  if (t && t.end) return `<button class="timer running" data-timer="${id}">⏱ ${label} · ${fmt((t.end - Date.now()) / 1000)}</button>`;
+  return `<button class="timer" data-timer="${id}">▶ ${label} · ${fmt(dur)}</button>`;
+}
+
+function renderSteps() {
+  let all = 0, ok = 0, h = "";
+  STEPS.forEach((st, si) => {
+    const n = st.items.length;
+    const d = st.items.filter((_, ii) => S.step[`s${si}-${ii}`]).length;
+    all += n; ok += d;
+    h += `<div class="step${d === n ? " done" : ""}"><div class="step-head"><div class="num">${d === n ? "✓" : si + 1}</div><h2>${st.title}</h2></div>`;
+    st.items.forEach((it, ii) => {
+      const id = `s${si}-${ii}`;
+      h += `<div class="row" role="checkbox" tabindex="0" aria-checked="${!!S.step[id]}" data-step="${id}">
+              <span class="box">${CHECK}</span>
+              <span class="txt">${it.t}${it.timer ? `<span class="timer-wrap" data-wrap="${id}">${timerHTML(id, it.timer[0], it.timer[1])}</span>` : ""}</span>
+            </div>`;
+    });
+    if (st.tip) h += `<div class="tip"><b>Tipp:</b> ${st.tip}</div>`;
+    h += `</div>`;
+  });
+  const head = `<div class="progress"><div class="bar"><i style="width:${ok / all * 100}%"></i></div>
+                <small>${ok} von ${all} Schritten erledigt</small></div>`;
+  const foot = (ok === all ? `<div class="final">Guten Appetit! 🍜</div>` : "") +
+               `<button class="reset" data-reset="step">Zubereitung zurücksetzen</button>`;
+  $("#tab-schritte").innerHTML = head + h + foot;
+}
+
+/* ---------- Timer ---------- */
+function timerDef(id) {
+  const [si, ii] = id.slice(1).split("-").map(Number);
+  return STEPS[si].items[ii].timer;
+}
+function refreshTimer(id) {
+  const w = document.querySelector(`[data-wrap="${id}"]`);
+  if (w) { const d = timerDef(id); w.innerHTML = timerHTML(id, d[0], d[1]); }
+}
+let audioCtx;
+function beep() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.35, 0.7].forEach(off => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.frequency.value = 880; o.connect(g); g.connect(audioCtx.destination);
+      g.gain.setValueAtTime(0.25, audioCtx.currentTime + off);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + off + 0.25);
+      o.start(audioCtx.currentTime + off); o.stop(audioCtx.currentTime + off + 0.3);
+    });
+  } catch (e) {}
+}
+function tick() {
+  const now = Date.now();
+  let changed = false;
+  for (const id in S.timers) {
+    const t = S.timers[id];
+    if (t.end && !t.done) {
+      if (now >= t.end) { t.done = true; changed = true; beep(); if (navigator.vibrate) navigator.vibrate([300, 150, 300]); }
+      refreshTimer(id);
+    }
+  }
+  if (changed) save();
+}
+setInterval(tick, 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { tick(); wakeReacquire(); } });
+
+/* ---------- Display anlassen ---------- */
+let wake = null;
+async function wakeReacquire() {
+  if ($("#awake").getAttribute("aria-pressed") !== "true") return;
+  try { wake = await navigator.wakeLock.request("screen"); } catch (e) {}
+}
+$("#awake").addEventListener("click", async e => {
+  const btn = e.currentTarget, on = btn.getAttribute("aria-pressed") !== "true";
+  if (!("wakeLock" in navigator)) { btn.textContent = "Nicht unterstützt"; return; }
+  try {
+    if (on) { wake = await navigator.wakeLock.request("screen"); }
+    else if (wake) { await wake.release(); wake = null; }
+    btn.setAttribute("aria-pressed", on);
+    btn.textContent = on ? "Display bleibt an" : "Display an";
+  } catch (err) { btn.textContent = "Nicht möglich"; }
+});
+
+/* ---------- Events ---------- */
+document.addEventListener("click", e => {
+  const timer = e.target.closest("[data-timer]");
+  if (timer) {
+    e.stopPropagation();
+    const id = timer.dataset.timer, t = S.timers[id], d = timerDef(id);
+    if (t) delete S.timers[id]; else S.timers[id] = { end: Date.now() + d[1] * 1000, done: false };
+    if (!t) { try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch (er) {} }
+    save(); refreshTimer(id); return;
+  }
+  const ing = e.target.closest("[data-ing]");
+  if (ing) { S.ing[ing.dataset.ing] = !S.ing[ing.dataset.ing]; save(); renderIngredients(); return; }
+  const stp = e.target.closest("[data-step]");
+  if (stp) { S.step[stp.dataset.step] = !S.step[stp.dataset.step]; save(); renderSteps(); return; }
+  const rs = e.target.closest("[data-reset]");
+  if (rs) {
+    const what = rs.dataset.reset;
+    if (!confirm(what === "ing" ? "Alle Zutaten wieder abwählen?" : "Zubereitung und Timer zurücksetzen?")) return;
+    if (what === "ing") { S.ing = {}; renderIngredients(); }
+    else { S.step = {}; S.timers = {}; renderSteps(); }
+    save(); return;
+  }
+  const tab = e.target.closest("[data-tab]");
+  if (tab) showTab(tab.dataset.tab);
+});
+
+function showTab(name) {
+  S.tab = name; save();
+  document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name));
+  $("#tab-zutaten").hidden = name !== "zutaten";
+  $("#tab-schritte").hidden = name !== "schritte";
+  window.scrollTo(0, 0);
+}
+
+/* ---------- Start ---------- */
+renderIngredients();
+renderSteps();
+showTab(S.tab === "schritte" ? "schritte" : "zutaten");
+tick();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>
