@@ -1,7 +1,8 @@
-const CACHE = "pho-v1";
+const CACHE = "pho-v2";
 const FILES = [
   "./",
   "./index.html",
+  "./original.js",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",

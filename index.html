@@ -15,29 +15,15 @@
 <link rel="icon" href="icon-192.png">
 <style>
   :root {
-    --bg: #fbf6ee;
-    --card: #ffffff;
-    --ink: #2a211b;
-    --muted: #7a6a5d;
-    --line: #eadfce;
-    --accent: #b4412a;
-    --accent-ink: #ffffff;
-    --accent-soft: #f6e1d9;
-    --ok: #4d7a3c;
-    --ok-soft: #e3eedb;
+    --bg: #fbf6ee; --card: #ffffff; --ink: #2a211b; --muted: #7a6a5d; --line: #eadfce;
+    --accent: #b4412a; --accent-ink: #ffffff; --accent-soft: #f6e1d9;
+    --ok: #4d7a3c; --ok-soft: #e3eedb; --gold: #e8b27a; --gold-soft: #fbefdc;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1b1613;
-      --card: #272019;
-      --ink: #f3e9dc;
-      --muted: #a8998a;
-      --line: #3a3027;
-      --accent: #e0674d;
-      --accent-ink: #1b1613;
-      --accent-soft: #3d2a23;
-      --ok: #8fbf79;
-      --ok-soft: #2b3626;
+      --bg: #1b1613; --card: #272019; --ink: #f3e9dc; --muted: #a8998a; --line: #3a3027;
+      --accent: #e0674d; --accent-ink: #1b1613; --accent-soft: #3d2a23;
+      --ok: #8fbf79; --ok-soft: #2b3626; --gold: #d49a5e; --gold-soft: #33281d;
     }
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -49,79 +35,173 @@
     padding-bottom: calc(76px + env(safe-area-inset-bottom));
     -webkit-user-select: none; user-select: none;
   }
+  button { font: inherit; color: inherit; }
   header { padding: 18px 20px 6px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   h1 { font: 700 30px/1.1 ui-serif, "New York", Georgia, serif; margin: 0; letter-spacing: -0.01em; }
   .sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
   .awake {
     flex: none; border: 1px solid var(--line); background: var(--card); color: var(--muted);
-    border-radius: 999px; padding: 7px 12px; font: 600 13px/1 inherit; cursor: pointer;
+    border-radius: 999px; padding: 7px 12px; font-weight: 600; font-size: 13px; line-height: 1; cursor: pointer;
   }
   .awake[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
   main { padding: 8px 16px 24px; max-width: 640px; margin: 0 auto; }
   section[hidden] { display: none; }
 
+  /* Timer-Leiste */
+  #timerbar {
+    position: sticky; top: 0; z-index: 5; display: flex; gap: 8px; flex-wrap: wrap;
+    padding: 8px 16px; background: var(--bg); border-bottom: 1px solid var(--line);
+  }
+  #timerbar[hidden] { display: none; }
+  .tchip {
+    border: 0; border-radius: 999px; padding: 8px 14px; background: var(--accent); color: var(--accent-ink);
+    font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; cursor: pointer;
+  }
+  .tchip.fin { background: var(--ok); color: #fff; }
+
+  /* Fortschritt */
   .progress { margin: 8px 4px 16px; }
   .bar { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; }
   .bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s; }
   .progress small { color: var(--muted); font-size: 13px; display: block; margin-top: 6px; }
 
+  /* Bestellen */
+  .hero h2 { font: 700 26px/1.15 ui-serif, "New York", Georgia, serif; margin: 6px 4px 4px; }
+  .hero p { color: var(--muted); margin: 0 4px 16px; font-size: 15px; }
+  .lab { display: flex; align-items: center; gap: 10px; margin: 22px 4px 10px; font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .lab b { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-size: 13px; letter-spacing: 0; }
+  .tiles { display: grid; gap: 10px; }
+  .tile {
+    position: relative; display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+    background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 14px 44px 14px 16px; cursor: pointer;
+  }
+  .tile .em { font-size: 38px; line-height: 1; flex: none; }
+  .tile .tx { display: block; }
+  .tile .nm { display: block; font: 700 19px/1.2 ui-serif, "New York", Georgia, serif; }
+  .tile .nm small { font-weight: 400; color: var(--muted); font-size: 14px; }
+  .tile .ds { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; }
+  .tile .bd { display: inline-block; margin-top: 6px; font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 3px 9px; }
+  .tile[aria-checked="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .tile[aria-checked="true"] .bd { background: var(--card); }
+  .tile[aria-checked="true"]::after {
+    content: "✓"; position: absolute; top: 12px; right: 12px; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-size: 14px; font-weight: 700;
+  }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .stepper { display: flex; align-items: center; justify-content: center; gap: 18px; }
+  .stepper button {
+    width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--accent); background: transparent;
+    color: var(--accent); font-size: 28px; line-height: 1; cursor: pointer; display: grid; place-items: center; padding: 0;
+  }
+  .stepper button:active { background: var(--accent-soft); }
+  .stepper input {
+    width: 84px; text-align: center; font: 700 34px/1 ui-serif, "New York", Georgia, serif; color: var(--ink);
+    background: transparent; border: 0; border-bottom: 2px solid var(--line); padding: 4px 0; border-radius: 0;
+    -moz-appearance: textfield; user-select: text; -webkit-user-select: text;
+  }
+  .stepper input:focus { outline: none; border-bottom-color: var(--accent); }
+  .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .pl { text-align: center; color: var(--muted); font-size: 14px; margin-top: 8px; }
+  .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; background: var(--line); border-radius: 14px; padding: 4px; }
+  .seg button { border: 0; background: transparent; border-radius: 10px; padding: 11px 6px; font-weight: 600; font-size: 15px; cursor: pointer; color: var(--muted); }
+  .seg button[aria-checked="true"] { background: var(--card); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .sublab { font-weight: 700; font-size: 15px; margin: 4px 0 8px; }
+  .sublab:not(:first-child) { margin-top: 16px; }
+  .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--line); background: var(--bg);
+    border-radius: 999px; padding: 9px 14px; font-size: 15px; cursor: pointer;
+  }
+  .chip[aria-checked="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .opt-radio { display: flex; flex-direction: column; gap: 8px; }
+  .opt-radio button {
+    text-align: left; border: 1.5px solid var(--line); background: var(--bg); border-radius: 14px; padding: 11px 14px; cursor: pointer;
+  }
+  .opt-radio button[aria-checked="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .opt-radio b { display: block; font-size: 16px; }
+  .opt-radio span { color: var(--muted); font-size: 13px; }
+
+  .ticket {
+    margin-top: 24px; background: var(--gold-soft); border: 2px dashed var(--gold); border-radius: 16px; padding: 16px 18px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 14px; line-height: 1.55;
+  }
+  .ticket h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .12em; text-align: center; text-transform: uppercase; color: var(--accent); }
+  .ticket .ln { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; border-bottom: 1px dotted var(--gold); }
+  .ticket .ln:last-child { border-bottom: 0; }
+  .ticket .ln span:first-child { color: var(--muted); flex: none; }
+  .ticket .ln span:last-child { text-align: right; font-weight: 600; }
+  .cta {
+    display: block; width: 100%; margin-top: 14px; border: 0; border-radius: 16px; padding: 16px; background: var(--accent);
+    color: var(--accent-ink); font-weight: 700; font-size: 18px; cursor: pointer;
+  }
+  .cta2 { display: block; margin: 10px auto 0; background: none; border: 0; color: var(--muted); text-decoration: underline; padding: 10px; cursor: pointer; font-size: 15px; }
+
+  /* Pille / Banner / Info */
+  .pill {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; margin: 6px 0 12px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; cursor: pointer; text-align: left;
+  }
+  .pill b { font-size: 16px; }
+  .pill span { color: var(--accent); font-size: 14px; font-weight: 600; flex: none; }
+  .banner { border-radius: 14px; padding: 11px 14px; font-size: 14px; margin: 0 0 14px; }
+  .banner.orig { background: var(--ok-soft); }
+  .banner.adapt { background: var(--gold-soft); }
+  .info { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; font-size: 15px; }
+  .info div { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+  .info span:first-child { color: var(--muted); }
+  .info span:last-child { font-weight: 600; text-align: right; }
+
+  /* Listen */
   .group { background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
-  .group h2 {
-    margin: 0; padding: 12px 16px 8px; font-size: 13px; font-weight: 700; letter-spacing: .06em;
-    text-transform: uppercase; color: var(--accent);
-  }
+  .group h2 { margin: 0; padding: 12px 16px 8px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .gnote { margin: 0; padding: 0 16px 10px; color: var(--muted); font-size: 14px; }
   .row {
-    display: flex; align-items: flex-start; gap: 14px; padding: 12px 16px; border-top: 1px solid var(--line);
-    cursor: pointer; width: 100%; text-align: left; background: none; border-left: 0; border-right: 0; border-bottom: 0;
-    color: inherit; font: inherit;
+    display: flex; align-items: flex-start; gap: 14px; padding: 12px 16px; border: 0; border-top: 1px solid var(--line);
+    cursor: pointer; width: 100%; text-align: left; background: none; color: inherit; font: inherit;
   }
-  .group h2 + .row { border-top: 0; }
-  .box {
-    flex: none; width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--line);
-    display: grid; place-items: center; margin-top: 1px; transition: .12s;
-  }
+  .box { flex: none; width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--line); display: grid; place-items: center; margin-top: 1px; transition: .12s; }
   .box svg { width: 16px; height: 16px; opacity: 0; stroke: var(--accent-ink); }
   .row[aria-checked="true"] .box { background: var(--accent); border-color: var(--accent); }
   .row[aria-checked="true"] .box svg { opacity: 1; }
   .row[aria-checked="true"] .txt { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--muted); }
+  .amt { font-variant-numeric: tabular-nums; }
   .opt { color: var(--muted); font-size: 14px; }
 
   .step { background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
   .step.done { opacity: .6; }
   .step-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px 10px; }
-  .num {
-    flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink);
-    display: grid; place-items: center; font-weight: 700; font-size: 15px;
-  }
+  .num { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 700; font-size: 15px; }
   .step.done .num { background: var(--ok); }
   .step-head h2 { margin: 0; font: 700 19px/1.2 ui-serif, "New York", Georgia, serif; }
   .tip { margin: 4px 16px 14px; padding: 10px 12px; background: var(--accent-soft); border-radius: 10px; font-size: 15px; }
   .tip b { color: var(--accent); }
-
   .timer {
-    margin-top: 8px; display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--accent);
-    color: var(--accent); background: transparent; border-radius: 999px; padding: 8px 14px;
-    font: 600 15px/1 inherit; font-variant-numeric: tabular-nums; cursor: pointer;
+    margin-top: 8px; display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--accent); color: var(--accent);
+    background: transparent; border-radius: 999px; padding: 8px 14px; font-weight: 600; font-size: 15px; line-height: 1; font-variant-numeric: tabular-nums; cursor: pointer;
   }
   .timer.running { background: var(--accent); color: var(--accent-ink); }
   .timer.finished { background: var(--ok); border-color: var(--ok); color: #fff; animation: pulse 1s infinite; }
   @keyframes pulse { 50% { transform: scale(1.04); } }
   .timer-wrap { display: block; }
-
   .final { text-align: center; font: 700 22px/1.2 ui-serif, Georgia, serif; padding: 18px 0 6px; }
-  .reset {
-    display: block; margin: 18px auto 0; background: none; border: 0; color: var(--muted);
-    font: 500 15px/1 inherit; padding: 12px; cursor: pointer; text-decoration: underline;
-  }
+  .reset { display: block; margin: 18px auto 0; background: none; border: 0; color: var(--muted); font-weight: 500; font-size: 15px; padding: 12px; cursor: pointer; text-decoration: underline; }
 
-  nav {
-    position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: var(--card);
-    border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom);
-  }
-  nav button {
-    flex: 1; background: none; border: 0; padding: 10px 0 8px; color: var(--muted);
-    font: 600 12px/1.2 inherit; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer;
-  }
+  /* Original */
+  .lang { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--line); border-radius: 14px; padding: 4px; margin-bottom: 14px; }
+  .lang button { border: 0; background: transparent; border-radius: 10px; padding: 10px; font-weight: 600; cursor: pointer; color: var(--muted); }
+  .lang button[aria-checked="true"] { background: var(--card); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .orig-body { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 6px 18px 18px; user-select: text; -webkit-user-select: text; font-size: 16px; }
+  .orig-body h2 { font: 700 21px/1.25 ui-serif, "New York", Georgia, serif; color: var(--accent); margin: 22px 0 8px; }
+  .orig-body h3 { font-size: 16px; margin: 18px 0 6px; }
+  .orig-body ul, .orig-body ol { padding-left: 22px; margin: 8px 0; }
+  .orig-body li { margin: 4px 0; }
+  .orig-body blockquote { margin: 12px 0; padding: 8px 12px; background: var(--accent-soft); border-radius: 10px; }
+  .orig-body blockquote p { margin: 0; }
+  .orig-body hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0; }
+
+  nav { position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: var(--card); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 6; }
+  nav button { flex: 1; background: none; border: 0; padding: 10px 0 8px; color: var(--muted); font-weight: 600; font-size: 12px; line-height: 1.2; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; }
   nav button span { font-size: 22px; line-height: 1; }
   nav button[aria-selected="true"] { color: var(--accent); }
 </style>
@@ -134,192 +214,504 @@
   </div>
   <button class="awake" id="awake" aria-pressed="false">Display an</button>
 </header>
+<div id="timerbar" hidden></div>
 
 <main>
-  <section id="tab-zutaten"></section>
-  <section id="tab-schritte" hidden></section>
+  <section id="tab-bestellen"></section>
+  <section id="tab-einkauf" hidden></section>
+  <section id="tab-kochen" hidden></section>
+  <section id="tab-original" hidden></section>
 </main>
 
 <nav role="tablist">
-  <button role="tab" aria-selected="true" data-tab="zutaten"><span>🛒</span>Zutaten</button>
-  <button role="tab" aria-selected="false" data-tab="schritte"><span>🍲</span>Zubereitung</button>
+  <button role="tab" aria-selected="true" data-tab="bestellen"><span>🧾</span>Bestellen</button>
+  <button role="tab" aria-selected="false" data-tab="einkauf"><span>🛒</span>Einkauf</button>
+  <button role="tab" aria-selected="false" data-tab="kochen"><span>🍲</span>Kochen</button>
+  <button role="tab" aria-selected="false" data-tab="original"><span>📜</span>Original</button>
 </nav>
 
+<script src="original.js"></script>
 <script>
 "use strict";
 
-/* ---------- Inhalt ---------- */
-const INGREDIENTS = [
-  { title: "Brühe", items: [
-    "Rindersuppenknochen (Mark- und Gelenkknochen)",
-    "Rinderhalsknochen",
-    "Ochsenschwanz",
-    "Short Ribs mit Knochen",
-    "Brust (Brisket)",
-    "Flanke",
-    "Short Ribs ohne Knochen",
-    "Rinderschulter (Chuck Roast)",
-  ]},
-  { title: "Fleisch-Toppings", items: [
-    "Eye of Round, Sirloin oder Ribeye (roh, dünn geschnitten)",
-    "Rindfleischbällchen (bò viên) <span class='opt'>optional</span>",
-    "Rindersehnen <span class='opt'>optional</span>",
-    "Rindermagen / Kutteln <span class='opt'>optional</span>",
-  ]},
-  { title: "Nudeln", items: [
-    "Flache Reisnudeln (bánh phở), getrocknet oder frisch",
-  ]},
-  { title: "Aromaten", items: [
-    "Gelbe Zwiebeln und/oder Schalotten",
-    "Ingwer",
-  ]},
-  { title: "Pho-Gewürze", items: [
-    "Saigon-Zimt <span class='opt'>(sonst normale Zimtstangen)</span>",
-    "Sternanis",
-    "Nelken",
-    "Kardamom",
-    "Koriandersamen",
-    "Fenchelsamen",
-  ]},
-  { title: "Würzung", items: [
-    "Salz",
-    "Zucker (Kristall- oder Kandiszucker)",
-    "Fischsauce",
-    "Brühpulver <span class='opt'>optional</span>",
-    "Glutamat (MSG) <span class='opt'>optional</span>",
-  ]},
-  { title: "Garnitur & Beilagen", items: [
-    "Gelbe Zwiebeln, dünn geschnitten",
-    "Frühlingszwiebeln",
-    "Koriandergrün",
-    "Thai-Basilikum <span class='opt'>optional</span>",
-    "Sojabohnensprossen <span class='opt'>optional</span>",
-    "Limettenspalten <span class='opt'>optional</span>",
-  ]},
-  { title: "Saucen", items: [
-    "Hoisin-Sauce",
-    "Sriracha oder andere Chilisauce",
-  ]},
-];
-
-const STEPS = [
-  { title: "Knochen und Fleisch vorbereiten", items: [
-    { t: "Knochen in einen großen Topf geben (mind. 8 Quarts, ca. 7,5 Liter)." },
-    { t: "Mit Wasser bedecken und zum Kochen bringen (dauert etwa 15 Minuten).", timer: ["Aufkochen", 15*60] },
-    { t: "Etwa 2 Minuten kochen, bis graue Unreinheiten aufsteigen. Nicht zu lange, sonst geht das Mark verloren.", timer: ["Abkochen", 2*60] },
-    { t: "Knochen herausnehmen und gründlich abspülen. Topf auswaschen und zurück auf den Herd stellen." },
-  ]},
-  { title: "Aromaten rösten", items: [
-    { t: "Zwiebeln und Ingwer vorbereiten und rösten, bis sie duften und dunkel geworden sind." },
-    { t: "Über offener Flamme (traditionell) oder in Heißluftfritteuse bzw. Toastofen (modern)." },
-  ]},
-  { title: "Gewürze rösten", items: [
-    { t: "Pho-Gewürze in einer kleinen Pfanne ohne Öl leicht anrösten, bis sie duften." },
-    { t: "In ein Baumwolltuch (Gaze) oder einen Gewürzbeutel binden. Alternativ lose in den Topf geben." },
-  ], tip: "Statt alle Gewürze einzeln zu kaufen, gibt es fertige Pho-Gewürzbeutel." },
-  { title: "Rinderbrühe kochen", items: [
-    { t: "Vorgekochte Knochen, rohes Fleisch, geröstete Aromaten und Gewürze in den Topf geben." },
-    { t: "Mit Wasser auffüllen, aufkochen, dann auf kleine Hitze schalten und sanft simmern lassen." },
-    { t: "Etwa 3 Stunden köcheln lassen.", timer: ["Köcheln", 3*3600] },
-    { t: "Nach der ersten Stunde Unreinheiten abschöpfen und wegwerfen. Mitabgeschöpfte Gewürze sind kein Problem." },
-    { t: "Reine Fleischstücke herausnehmen, sobald sie stäbchenzart sind (ca. 45 Minuten).", timer: ["Fleisch", 45*60] },
-    { t: "Größere Short Ribs mit Knochen nach ca. 1 Std. 45 Min. herausnehmen.", timer: ["Short Ribs", 105*60] },
-    { t: "Knochen zurück in den Topf geben und weiterköcheln lassen." },
-    { t: "Fleisch kalt stellen oder in Eiswasser legen. Danach dünn aufschneiden und als Topping beiseitelegen." },
-  ]},
-  { title: "Abseihen und Fett abschöpfen", items: [
-    { t: "Alle festen Bestandteile abseihen, bis eine klare Brühe übrig bleibt." },
-    { t: "Die gesamte Oberfläche abschöpfen, um überschüssiges Fett zu entfernen." },
-  ]},
-  { title: "Brühe würzen", items: [
-    { t: "Würzzutaten nach und nach hinzufügen und abschmecken." },
-  ], tip: "Die Brühe soll ausgewogen, herzhaft und leicht süßlich sein." },
-  { title: "Nudeln und Toppings vorbereiten", items: [
-    { t: "Reisnudeln nach Packungsanleitung kochen, abspülen und gut abtropfen lassen." },
-  ], tip: "Wird sofort serviert, alle Nudeln auf einmal kochen. Sonst jeweils eine Handvoll pro Schüssel." },
-  { title: "Schüsseln anrichten", items: [
-    { t: "Nudeln und aufgeschnittenes gegartes Fleisch in die Schüssel geben." },
-    { t: "Rohe Rindfleischscheiben obenauf legen (falls verwendet)." },
-    { t: "Heiße Brühe darübergießen." },
-    { t: "Mit Zwiebeln, Frühlingszwiebeln, Koriandergrün und Limette toppen." },
-  ]},
-];
-
-/* ---------- Zustand (lokal gespeichert) ---------- */
-const KEY = "pho.v1";
-let S = { ing: {}, step: {}, timers: {}, tab: "zutaten" };
-try { S = Object.assign(S, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
-
-const CHECK = '<svg viewBox="0 0 16 16" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+/* =====================================================================
+   Hilfsfunktionen
+   ===================================================================== */
 const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const FR = { 0.25: "¼", 0.5: "½", 0.75: "¾" };
+function num(x) {
+  const r = Math.round(x * 100) / 100;
+  const i = Math.floor(r + 1e-9), f = Math.round((r - i) * 100) / 100;
+  if (f === 0) return String(i);
+  if (FR[f]) return (i ? String(i) : "") + FR[f];
+  return String(r).replace(".", ",");
+}
+const joinDe = a => a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " und " + a[a.length - 1];
+const portionen = P => P === 1 ? "1 Portion" : P + " Portionen";
 
-/* ---------- Zutaten ---------- */
-function renderIngredients() {
-  const total = INGREDIENTS.reduce((n, g) => n + g.items.length, 0);
-  const done = Object.values(S.ing).filter(Boolean).length;
-  let h = `<div class="progress"><div class="bar"><i style="width:${total ? done / total * 100 : 0}%"></i></div>
-           <small>${done} von ${total} abgehakt</small></div>`;
-  INGREDIENTS.forEach((g, gi) => {
-    h += `<div class="group"><h2>${g.title}</h2>`;
-    g.items.forEach((it, ii) => {
-      const id = `i${gi}-${ii}`;
-      h += `<button class="row" role="checkbox" aria-checked="${!!S.ing[id]}" data-ing="${id}">
-              <span class="box">${CHECK}</span><span class="txt">${it}</span></button>`;
-    });
-    h += `</div>`;
-  });
-  h += `<button class="reset" data-reset="ing">Zutaten zurücksetzen</button>`;
-  $("#tab-zutaten").innerHTML = h;
+/* Menge pro Portion -> gerundete Gesamtmenge */
+const UNITSTEP = { g: 5, ml: 5, TL: 0.25, EL: 0.5, Stk: 1 };
+function qty(it, P) {
+  const step = it.step || UNITSTEP[it.unit] || 1;
+  const q = Math.round(it.per * P / step) * step;
+  return Math.max(q, it.min || step);
+}
+function amtText(it, P) {
+  if (it.free) return "";
+  const q = qty(it, P);
+  switch (it.unit) {
+    case "g":  return q >= 1000 ? num(Math.round(q / 10) / 100) + " kg" : q + " g";
+    case "ml": return q >= 1000 ? num(Math.round(q / 10) / 100) + " l" : q + " ml";
+    case "Stk": return num(q);
+    default: return num(q) + " " + it.unit;
+  }
+}
+function itemName(it, P) {
+  return (it.sg && qty(it, P) <= 1) ? it.sg : it.name;
+}
+const I = (id, name, per, unit, o = {}) => ({ id, name, per, unit, ...o });
+const FREE = (id, name, free, o = {}) => ({ id, name, free, ...o });
+
+/* =====================================================================
+   Zustand (nur lokal gespeichert)
+   ===================================================================== */
+const KEY = "pho.v2";
+const CH_DEF = {
+  huhn: { cut: "keule" },
+  rind: { fleisch: { brust: 1 }, knochen: { ochsen: 1 } },
+  tofu: {}
+};
+let S = { v: "huhn", P: 2, noodles: "dry", cfg: {}, ing: {}, step: {}, timers: {}, tab: "bestellen", lang: "de" };
+try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+function cfg(v = S.v) {
+  if (!S.cfg[v]) S.cfg[v] = { ch: JSON.parse(JSON.stringify(CH_DEF[v])), ex: { basil: 1, sprouts: 1, lime: 1, hoisin: 1, sriracha: 1 } };
+  return S.cfg[v];
+}
+const ex = k => !!cfg().ex[k];
+if (!CH_DEF[S.v]) S.v = "huhn";
+if (!(S.P >= 1 && S.P <= 24)) S.P = 2;
+
+/* =====================================================================
+   Rezeptdaten
+   ===================================================================== */
+const VARS = {
+  huhn: { emoji: "🐔", name: "Hähnchen", pho: "Phở Gà", desc: "Mild, zart und schneller fertig. Mit Hähnchen aus dem normalen Supermarkt.", origin: false, time: "ca. 2 Std.", wl: 0.8 },
+  rind: { emoji: "🐄", name: "Rind", pho: "Phở Bò", desc: "Die klassische Variante mit Knochen und Fleisch.", origin: true, badge: "Original von Sarahs Tante", time: "ca. 4 Std. (3 Std. köcheln)", wl: 0.9 },
+  tofu: { emoji: "🌱", name: "Tofu, vegetarisch", pho: "Phở Chay", desc: "Komplett ohne Fleisch und Fisch. Mit Pilzen, Gemüse und gebratenem Tofu.", origin: false, time: "ca. 1½ Std.", wl: 0.75 }
+};
+const CHOICES = {
+  huhn: [
+    { key: "cut", title: "Welches Hähnchen?", type: "radio", opts: [
+      ["keule", "Hähnchenkeulen", "einfach zu bekommen, aromatisch"],
+      ["ganz", "Ganzes Suppenhuhn", "klassisch, ergibt auch Reste"] ] }
+  ],
+  rind: [
+    { key: "fleisch", title: "Fleischstücke zum Mitkochen", type: "multi", opts: [
+      ["brust", "Brust (Brisket)"], ["flanke", "Flanke"], ["srOhne", "Short Ribs ohne Knochen"], ["chuck", "Rinderschulter (günstig)"] ] },
+    { key: "knochen", title: "Knochen mit Fleisch", type: "multi", opts: [
+      ["ochsen", "Ochsenschwanz"], ["hals", "Rinderhalsknochen"], ["srMit", "Short Ribs mit Knochen"] ],
+      hint: "Suppenknochen (Mark- und Gelenkknochen) sind immer dabei. Wähle insgesamt mindestens ein Fleischstück." }
+  ],
+  tofu: []
+};
+const EXTRAS = (v) => [
+  ...(v === "rind" ? [{ title: "Fleisch-Toppings", items: [["raw", "🥩", "Rohe Rindfleischscheiben"], ["balls", "🧆", "Rindfleischbällchen (bò viên)"], ["tendon", "🦴", "Rindersehnen"], ["tripe", "🍖", "Kutteln"]] }] : []),
+  { title: "Frische Beilagen", items: [["basil", "🌿", "Thai-Basilikum"], ["sprouts", "🌱", "Sojabohnensprossen"], ["lime", "🍋", "Limette"]] },
+  { title: "Saucen", items: [["hoisin", "🍯", "Hoisin-Sauce"], ["sriracha", "🌶️", "Sriracha / Chilisauce"]] },
+  { title: "Mehr Umami (optional)", items: [["bouillon", "🧂", v === "tofu" ? "Gemüsebrühpulver" : "Brühpulver"], ["msg", "✨", "Glutamat (MSG)"]] }
+];
+const LABEL = {};
+Object.keys(VARS).forEach(v => EXTRAS(v).forEach(g => g.items.forEach(([k, , l]) => LABEL[k] = l)));
+const CHL = { cut: { keule: "Keulen", ganz: "Ganzes Suppenhuhn" }, fleisch: { brust: "Brust", flanke: "Flanke", srOhne: "Short Ribs o. K.", chuck: "Rinderschulter" }, knochen: { ochsen: "Ochsenschwanz", hals: "Halsknochen", srMit: "Short Ribs m. K." } };
+
+function water() { return Math.max(1.5, Math.ceil(VARS[S.v].wl * S.P * 2) / 2); }
+function pot() { return Math.max(3, Math.ceil(water() * 1.3)); }
+
+/* ---------- Einkaufsliste ---------- */
+function noodleGroup() {
+  return { title: "Nudeln", items: [
+    S.noodles === "dry"
+      ? I("n-dry", "Getrocknete Reisnudeln (bánh phở, flach)", 80, "g", { step: 10 })
+      : I("n-fresh", "Frische Reisnudeln (bánh phở, flach)", 150, "g", { step: 50 })
+  ] };
+}
+function freshGroup(extra = []) {
+  return { title: "Gemüse & Kräuter", note: "Frisch ist ein Muss!", items: [
+    I("a-onion", "Gelbe Zwiebeln (oder Schalotten) für die Brühe", 0.5, "Stk", { step: 0.5, min: 1, sg: "Gelbe Zwiebel (oder Schalotte) für die Brühe" }),
+    I("a-ginger", "Ingwer, frisch", 20, "g", { step: 5, min: 20 }),
+    ...extra,
+    I("g-onion", "Gelbe Zwiebeln, dünn geschnitten (zum Garnieren)", 0.25, "Stk", { step: 0.5, min: 0.5, sg: "Gelbe Zwiebel, dünn geschnitten (zum Garnieren)" }),
+    I("g-spring", "Frühlingszwiebeln", 1, "Stk", { step: 1, sg: "Frühlingszwiebel" }),
+    I("g-cilantro", "Koriandergrün", 10, "g", { step: 5, min: 10 }),
+    ...(ex("basil") ? [I("g-basil", "Thai-Basilikum", 5, "g", { step: 5, min: 10 })] : []),
+    ...(ex("sprouts") ? [I("g-sprouts", "Sojabohnensprossen", 40, "g", { step: 10, min: 40 })] : []),
+    ...(ex("lime") ? [I("g-lime", "Limetten", 0.5, "Stk", { step: 0.5, min: 0.5, sg: "Limette" })] : [])
+  ] };
+}
+function spiceGroup(light) {
+  const p4 = { zimt: 1, stern: light ? 2 : 3, nelke: light ? 3 : 4, kard: light ? 1 : 2, kori: light ? 2 : 3, fen: light ? 0.5 : 1 };
+  return { title: "Pho-Gewürze", note: "Saigon-Zimt ist dicker und rindenartiger als der Zimt aus dem Backregal. Falls du keinen bekommst, nimm einfach Zimtstangen, die du zu Hause hast. Statt alle Gewürze einzeln zu kaufen, gibt es auch fertige Pho-Gewürzbeutel.", items: [
+    I("s-zimt", "Saigon-Zimtstangen (ca. 7 cm)", p4.zimt / 4, "Stk", { step: 1, min: 1, sg: "Saigon-Zimtstange (ca. 7 cm)" }),
+    I("s-stern", "Sternanis", p4.stern / 4, "Stk", { step: 1, min: 1 }),
+    I("s-nelke", "Nelken", p4.nelke / 4, "Stk", { step: 1, min: 1 }),
+    I("s-kard", "Kardamomkapseln", p4.kard / 4, "Stk", { step: 1, min: 1, sg: "Kardamomkapsel" }),
+    I("s-kori", "Koriandersamen", p4.kori / 4, "TL", { step: 0.25, min: 0.5 }),
+    I("s-fen", "Fenchelsamen", p4.fen / 4, "TL", { step: 0.25, min: 0.25 })
+  ] };
+}
+function seasonGroup(tofu) {
+  return { title: "Würzung", note: "Richtwerte zum Starten, dann nach und nach abschmecken.", items: [
+    I("w-salz", "Salz", 0.5, "TL", { step: 0.25, min: 0.5 }),
+    I("w-zucker", "Zucker (Kristall- oder Kandiszucker)", 1, "TL", { step: 0.5, min: 1 }),
+    tofu ? I("w-soja", "Sojasauce", 1, "EL", { step: 0.5, min: 1 }) : I("w-fisch", "Fischsauce", 1, "EL", { step: 0.5, min: 1 }),
+    ...(ex("bouillon") ? [FREE("w-brueh", tofu ? "Gemüsebrühpulver" : "Brühpulver", "nach Geschmack", { opt: true })] : []),
+    ...(ex("msg") ? [FREE("w-msg", "Glutamat (MSG)", "nach Geschmack", { opt: true })] : [])
+  ] };
+}
+function sauceGroup() {
+  return { title: "Saucen", items: [
+    ...(ex("hoisin") ? [I("x-hoisin", "Hoisin-Sauce (süß-herzhaft)", 1, "EL", { step: 0.5, min: 1 })] : []),
+    ...(ex("sriracha") ? [FREE("x-sriracha", "Sriracha oder andere Chilisauce", "nach Geschmack")] : [])
+  ] };
+}
+function groups() {
+  const v = S.v, c = cfg().ch;
+  let first;
+  if (v === "huhn") {
+    first = { title: "Hähnchen", items: [
+      c.cut === "ganz"
+        ? I("h-ganz", "Suppenhühner, ganz (je ca. 1,5 kg)", 350 / 1500, "Stk", { step: 1, min: 1, sg: "Suppenhuhn, ganz (ca. 1,5 kg)" })
+        : I("h-keule", "Hähnchenkeulen (Ober- und Unterschenkel, mit Knochen)", 300, "g", { step: 50, min: 300 })
+    ] };
+  } else if (v === "rind") {
+    const fl = Object.keys(c.fleisch || {}).filter(k => c.fleisch[k]);
+    const kn = Object.keys(c.knochen || {}).filter(k => c.knochen[k]);
+    const FL = { brust: "Brust (Brisket)", flanke: "Flanke", srOhne: "Short Ribs ohne Knochen", chuck: "Rinderschulter (Chuck Roast)" };
+    const KN = { ochsen: "Ochsenschwanz", hals: "Rinderhalsknochen", srMit: "Short Ribs mit Knochen" };
+    first = { title: "Knochen & Fleisch", note: "Suppenknochen gibt es meist in Beuteln im Asia-Supermarkt: eine Mischung aus Beinknochen, meist Mark- und Gelenkknochen. Gelenkknochen kommen manchmal mit etwas Sehne.", items: [
+      I("r-bones", "Rindersuppenknochen (Mark- und Gelenkknochen)", 250, "g", { step: 50 }),
+      ...kn.map(k => I("r-" + k, KN[k], 150 / kn.length, "g", { step: 50, min: 100 })),
+      ...fl.map(k => I("r-" + k, FL[k], 120 / fl.length, "g", { step: 50, min: 100 })),
+      ...(ex("raw") ? [I("r-raw", "Eye of Round (oder Sirloin / Ribeye), roh zum Dünnschneiden", 60, "g", { step: 10, min: 50 })] : []),
+      ...(ex("balls") ? [I("r-balls", "Rindfleischbällchen (bò viên)", 3, "Stk", { step: 1, min: 3 })] : []),
+      ...(ex("tendon") ? [I("r-tendon", "Rindersehnen", 50, "g", { step: 10, min: 50 })] : []),
+      ...(ex("tripe") ? [I("r-tripe", "Rindermagen (Kutteln)", 50, "g", { step: 10, min: 50 })] : [])
+    ] };
+  } else {
+    first = { title: "Tofu & Pilze", items: [
+      I("t-tofu", "Tofu, fest (natur)", 125, "g", { step: 25, min: 125 }),
+      I("t-shiitake", "Getrocknete Shiitake", 5, "g", { step: 5, min: 10 }),
+      I("t-champ", "Frische Champignons (oder Kräuterseitlinge)", 50, "g", { step: 25, min: 50 }),
+      I("t-oel", "Neutrales Öl zum Braten", 1, "TL", { step: 0.5, min: 1 })
+    ] };
+  }
+  const veg = v === "tofu" ? [
+    I("t-daikon", "Daikon (weißer Rettich)", 80, "g", { step: 10, min: 80 }),
+    I("t-karotte", "Karotten", 50, "g", { step: 10, min: 50 })
+  ] : [];
+  return [first, noodleGroup(), freshGroup(veg), spiceGroup(v === "huhn"), seasonGroup(v === "tofu"), sauceGroup()].filter(g => g.items.length);
 }
 
 /* ---------- Zubereitung ---------- */
+const A = {  // Schritte, die für alle Sorten aus dem Original übernommen sind
+  aroma: { title: "Aromaten rösten", items: [
+    { t: "Zwiebeln und Ingwer vorbereiten und rösten, bis sie duften und dunkel geworden sind." },
+    { t: "Über offener Flamme (traditionell) oder in Heißluftfritteuse bzw. Toastofen (modern)." } ] },
+  spice: { title: "Gewürze rösten", items: [
+    { t: "Pho-Gewürze in einer kleinen Pfanne ohne Öl leicht anrösten, bis sie duften." },
+    { t: "In ein Baumwolltuch (Gaze) oder einen Gewürzbeutel binden, damit sie sich später leicht entfernen lassen. Alternativ lose in den Topf geben." } ],
+    tip: "Statt alle Gewürze einzeln zu kaufen, gibt es fertige Pho-Gewürzbeutel." },
+  strain: { title: "Abseihen und Fett abschöpfen", items: [
+    { t: "Alle festen Bestandteile abseihen, bis eine klare Brühe übrig bleibt." },
+    { t: "Jetzt die gesamte Oberfläche abschöpfen, um überschüssiges Fett zu entfernen." } ] },
+  noodle: { title: "Nudeln vorbereiten", items: [
+    { t: "Reisnudeln nach Packungsanleitung kochen, anschließend abspülen und gut abtropfen lassen." } ],
+    tip: "Wird sofort serviert, alle Nudeln auf einmal kochen. Sonst jeweils eine Handvoll pro Schüssel." }
+};
+const toppings = () => {
+  const l = ["dünn geschnittenen Zwiebeln", "Frühlingszwiebeln", "Koriandergrün"];
+  if (ex("basil")) l.push("Thai-Basilikum");
+  if (ex("sprouts")) l.push("Sojabohnensprossen");
+  if (ex("lime")) l.push("Limettenspalten");
+  return "Mit " + joinDe(l) + " toppen.";
+};
+const saucesLine = () => {
+  const l = [];
+  if (ex("hoisin")) l.push("Hoisin-Sauce");
+  if (ex("sriracha")) l.push("Sriracha oder Chilisauce");
+  return l.length ? joinDe(l) + " dazu reichen." : "";
+};
+const seasonTip = "Die Brühe soll ausgewogen, herzhaft und leicht süßlich sein.";
+
+const hasMeatOnly = () => Object.values(cfg().ch.fleisch || {}).some(Boolean);
+const hasSrMit = () => !!(cfg().ch.knochen || {}).srMit;
+const hasMeatyBones = () => !!((cfg().ch.knochen || {}).ochsen || (cfg().ch.knochen || {}).hals);
+
+const STEPS = {
+  rind: [
+    { title: "Knochen und Fleisch vorbereiten", items: [
+      { t: () => `Knochen in einen großen Topf geben. Original: mindestens 8 Quarts (ca. 7,5 Liter). Für ${portionen(S.P)} reichen ca. ${pot()} Liter.` },
+      { t: "Mit Wasser bedecken und zum Kochen bringen (dauert etwa 15 Minuten).", timer: ["Aufkochen", 15 * 60] },
+      { t: "Etwa 2 Minuten kochen, bis graue Unreinheiten aufsteigen. Nicht zu lange, sonst geht das Mark verloren.", timer: ["Abkochen", 2 * 60] },
+      { t: "Knochen herausnehmen und gründlich abspülen. Topf auswaschen und zurück auf den Herd stellen." } ] },
+    A.aroma, A.spice,
+    { title: "Rinderbrühe kochen", items: [
+      { t: "Vorgekochte Knochen, rohes Fleisch, geröstete Aromaten und Gewürze in den Topf geben." },
+      { t: () => `Mit Wasser auffüllen (ca. ${num(water())} Liter), zum Kochen bringen und dann auf kleine Hitze schalten, sodass die Brühe sanft simmert.` },
+      { t: "Etwa 3 Stunden köcheln lassen. Manche kochen noch länger, aber drei Stunden reichen, um alle Aromen aus den Knochen zu ziehen.", timer: ["Köcheln", 3 * 3600] },
+      { t: "Nach der ersten Stunde die Unreinheiten abschöpfen, die an die Oberfläche steigen, und wegwerfen. Falls dabei lose Gewürze mit abgeschöpft werden, ist das nicht schlimm: Sie haben ihre Arbeit dann schon getan." },
+      { t: "Reine Fleischstücke (Brust, Flanke, Short Ribs ohne Knochen, Rinderschulter) herausnehmen, sobald sie stäbchenzart sind: nach ca. 45 Minuten.", timer: ["Fleisch", 45 * 60], when: hasMeatOnly },
+      { t: "Größere Short Ribs mit Knochen herausnehmen, sobald sie stäbchenzart sind: nach ca. 1 Stunde 45 Minuten.", timer: ["Short Ribs", 105 * 60], when: hasSrMit },
+      { t: "Ochsenschwanz und Halsknochen ebenfalls herausnehmen, sobald das Fleisch stäbchenzart ist. Dafür nennt das Original keine Zeit: einfach mit der Gabel testen. (Ergänzung)", when: hasMeatyBones },
+      { t: "Die Knochen zurück in den Topf geben und weiterköcheln lassen." },
+      { t: "Fleischstücke kalt stellen oder in Eiswasser legen, um den Garprozess zu stoppen und sie schnell fest werden zu lassen. Danach dünn aufschneiden und als spätere Toppings beiseitelegen." } ] },
+    A.strain,
+    { title: "Brühe würzen", items: [
+      { t: "Würzzutaten nach und nach hinzufügen und dabei abschmecken." } ], tip: seasonTip },
+    A.noodle,
+    { title: "Schüsseln anrichten", items: [
+      { t: "Nudeln und aufgeschnittenes gegartes Fleisch in eine Schüssel geben." },
+      { t: "Rohe Rindfleischscheiben obenauf legen. Die heiße Brühe gart sie sofort.", when: () => ex("raw") },
+      { t: "Die heiße Brühe darübergießen." },
+      { t: () => toppings() },
+      { t: () => saucesLine(), when: () => !!saucesLine() } ] }
+  ],
+  huhn: [
+    { title: "Hähnchen vorbereiten", items: [
+      { t: () => `Hähnchen kalt abspülen und in einen großen Topf geben. Für ${portionen(S.P)} reichen ca. ${pot()} Liter.` },
+      { t: "Mit kaltem Wasser bedecken und zum Kochen bringen." },
+      { t: "Etwa 2 bis 3 Minuten kochen, bis graue Unreinheiten aufsteigen, dann das Wasser abgießen (für eine klarere Brühe).", timer: ["Abkochen", 150] },
+      { t: "Hähnchen kurz abspülen. Topf auswaschen und zurück auf den Herd stellen." } ] },
+    A.aroma, A.spice,
+    { title: "Hähnchenbrühe kochen", items: [
+      { t: () => `Hähnchen, geröstete Aromaten und Gewürze in den Topf geben und mit ca. ${num(water())} Liter kaltem Wasser auffüllen.` },
+      { t: "Zum Kochen bringen und dann auf kleine Hitze schalten. Die Brühe soll nur sanft simmern, nicht sprudeln, sonst wird sie trüb und das Fleisch zäh." },
+      { t: "Unreinheiten und Schaum, die nach oben steigen, abschöpfen und wegwerfen." },
+      { t: () => cfg().ch.cut === "ganz"
+          ? "Ganzes Suppenhuhn: nach ca. 45 bis 60 Minuten prüfen, ob es gar ist. An der dicksten Stelle der Keule muss klarer Saft austreten."
+          : "Keulen: nach ca. 30 bis 40 Minuten prüfen, ob sie gar sind. An der dicksten Stelle muss klarer Saft austreten.",
+        timer: () => cfg().ch.cut === "ganz" ? ["Huhn gar?", 50 * 60] : ["Keulen gar?", 40 * 60] },
+      { t: "Hähnchen herausnehmen und kurz in Eiswasser legen, damit das Fleisch saftig und fest bleibt. Danach das Fleisch von den Knochen lösen und in Streifen zupfen oder schneiden." },
+      { t: "Knochen (und nach Wunsch die Haut) zurück in den Topf geben und weiterköcheln lassen. Insgesamt ca. 1½ Stunden Kochzeit.", timer: ["Weiterköcheln", 50 * 60] } ] },
+    A.strain,
+    { title: "Brühe würzen", items: [
+      { t: "Fischsauce, Salz und Zucker nach und nach hinzufügen und dabei abschmecken." } ], tip: seasonTip },
+    A.noodle,
+    { title: "Schüsseln anrichten", items: [
+      { t: "Nudeln und gezupftes Hähnchen in eine Schüssel geben." },
+      { t: "Die heiße Brühe darübergießen." },
+      { t: () => toppings() },
+      { t: () => saucesLine(), when: () => !!saucesLine() } ] }
+  ],
+  tofu: [
+    { title: "Gemüse und Pilze vorbereiten", items: [
+      { t: "Getrocknete Shiitake in lauwarmem Wasser einweichen. Das Einweichwasser aufheben.", timer: ["Shiitake einweichen", 20 * 60] },
+      { t: "Rettich und Karotten schälen und in grobe Stücke schneiden. Frische Pilze halbieren." } ] },
+    A.aroma, A.spice,
+    { title: "Gemüsebrühe kochen", items: [
+      { t: () => `Aromaten, Gewürze, Rettich, Karotten und Pilze in den Topf geben. Eingeweichte Shiitake samt abgeseihtem Einweichwasser dazugeben und mit ca. ${num(water())} Liter Wasser auffüllen.` },
+      { t: "Zum Kochen bringen, dann auf kleine Hitze schalten und sanft simmern lassen." },
+      { t: "Etwa 1 Stunde köcheln lassen. Falls Schaum aufsteigt, abschöpfen.", timer: ["Köcheln", 3600] } ] },
+    { title: "Tofu braten", items: [
+      { t: "Parallel zur Brühe: Tofu zwischen Küchenpapier mit einem Gewicht beschweren, damit das Wasser herauskommt.", timer: ["Tofu pressen", 12 * 60] },
+      { t: "Tofu in Würfel oder Scheiben schneiden." },
+      { t: "Öl in einer Pfanne erhitzen und den Tofu von allen Seiten goldbraun braten.", timer: ["Tofu braten", 8 * 60] },
+      { t: "Zum Schluss mit einem Schuss Sojasauce ablöschen und beiseitestellen." } ] },
+    A.strain,
+    { title: "Brühe würzen", items: [
+      { t: "Sojasauce, Salz und Zucker nach und nach hinzufügen und dabei abschmecken." } ],
+      tip: "Ohne Fischsauce braucht die Brühe etwas mehr Salz und Sojasauce. Ruhig mehrfach abschmecken. " + seasonTip },
+    A.noodle,
+    { title: "Schüsseln anrichten", items: [
+      { t: "Nudeln und gebratenen Tofu in eine Schüssel geben." },
+      { t: "Die heiße Brühe darübergießen." },
+      { t: () => toppings() },
+      { t: () => saucesLine(), when: () => !!saucesLine() } ] }
+  ]
+};
+
+/* =====================================================================
+   Darstellung
+   ===================================================================== */
+const CHECK = '<svg viewBox="0 0 16 16" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+const TIMERDEF = {};
+
+function orderSummaryText() {
+  const v = VARS[S.v];
+  return `${v.emoji} ${v.name} · ${portionen(S.P)}`;
+}
+function banner() {
+  return VARS[S.v].origin
+    ? `<div class="banner orig">🏅 <b>Original von Sarahs Tante (New York).</b> Texte und Zeiten stammen von ihr. Mengen sind Richtwerte, denn im Original stehen keine.</div>`
+    : `<div class="banner adapt">✏️ <b>Angepasste Version, nicht von der Tante.</b> Das Grundprinzip (Aromaten und Gewürze rösten, abschäumen, würzen) ist aus ihrem Rezept übernommen. Zutaten, Zeiten und Mengen sind Ergänzungen und Richtwerte. Ihr Rezept steht unverändert unter „Original“.</div>`;
+}
+function pillHTML() {
+  return `<button class="pill" data-tab="bestellen"><b>${esc(orderSummaryText())}</b><span>ändern</span></button>`;
+}
+
+/* ----- Bestellen ----- */
+function renderOrder() {
+  const c = cfg();
+  let h = `<div class="hero"><h2>Was darf’s sein?</h2><p>Stell dir deine Pho zusammen. Einkaufsliste und Anleitung passen sich an.</p></div>`;
+  h += `<div class="lab"><b>1</b>Sorte</div><div class="tiles" role="radiogroup">`;
+  Object.entries(VARS).forEach(([k, v]) => {
+    h += `<button class="tile" role="radio" aria-checked="${S.v === k}" data-v="${k}"><span class="em">${v.emoji}</span><span class="tx"><span class="nm">${v.name} <small>· ${v.pho}</small></span><span class="ds">${v.desc}</span>${v.badge ? `<span class="bd">${v.badge}</span>` : ""}</span></button>`;
+  });
+  h += `</div>`;
+  h += `<div class="lab"><b>2</b>Portionen</div><div class="panel"><div class="stepper"><button data-p="-1" aria-label="Eine Portion weniger">−</button><input id="pinput" type="number" inputmode="numeric" min="1" max="24" value="${S.P}" aria-label="Anzahl Portionen"><button data-p="1" aria-label="Eine Portion mehr">+</button></div><div class="pl">Portionen (große Schüsseln)</div><p class="hint" style="text-align:center">Die Brühe lässt sich prima einfrieren. Lieber etwas mehr kochen.</p></div>`;
+  h += `<div class="lab"><b>3</b>Nudeln</div><div class="seg" role="radiogroup"><button role="radio" aria-checked="${S.noodles === "dry"}" data-noodle="dry">Getrocknet</button><button role="radio" aria-checked="${S.noodles === "fresh"}" data-noodle="fresh">Frisch</button></div>`;
+  const chs = CHOICES[S.v];
+  let step = 4;
+  if (chs.length) {
+    h += `<div class="lab"><b>${step++}</b>Deine Auswahl</div><div class="panel">`;
+    chs.forEach(ch => {
+      h += `<div class="sublab">${ch.title}</div>`;
+      if (ch.type === "radio") {
+        h += `<div class="opt-radio" role="radiogroup">` + ch.opts.map(([k, l, d]) => `<button role="radio" aria-checked="${c.ch[ch.key] === k}" data-radio="${ch.key}:${k}"><b>${l}</b><span>${d}</span></button>`).join("") + `</div>`;
+      } else {
+        h += `<div class="chips">` + ch.opts.map(([k, l]) => `<button class="chip" role="checkbox" aria-checked="${!!(c.ch[ch.key] || {})[k]}" data-multi="${ch.key}:${k}">${l}</button>`).join("") + `</div>`;
+        if (ch.hint) h += `<p class="hint">${ch.hint}</p>`;
+      }
+    });
+    h += `</div>`;
+  }
+  h += `<div class="lab"><b>${step}</b>Extras</div><div class="panel">`;
+  EXTRAS(S.v).forEach(g => {
+    h += `<div class="sublab">${g.title}</div><div class="chips">` + g.items.map(([k, e, l]) => `<button class="chip" role="checkbox" aria-checked="${!!c.ex[k]}" data-ex="${k}">${e} ${l}</button>`).join("") + `</div>`;
+  });
+  h += `</div><div id="ticket"></div>`;
+  h += `<button class="cta" data-tab="einkauf">Zur Einkaufsliste →</button><button class="cta2" data-tab="kochen">Direkt zum Kochen</button>`;
+  $("#tab-bestellen").innerHTML = h;
+  renderTicket();
+}
+function renderTicket() {
+  const c = cfg(), v = VARS[S.v], lines = [];
+  lines.push(["Sorte", `${v.name} (${v.pho})`]);
+  lines.push(["Menge", portionen(S.P)]);
+  lines.push(["Nudeln", S.noodles === "dry" ? "getrocknet" : "frisch"]);
+  CHOICES[S.v].forEach(ch => {
+    const sel = ch.type === "radio" ? [CHL[ch.key][c.ch[ch.key]]] : Object.keys(c.ch[ch.key] || {}).filter(k => c.ch[ch.key][k]).map(k => CHL[ch.key][k]);
+    if (sel.length) lines.push([ch.type === "radio" ? "Auswahl" : (ch.key === "fleisch" ? "Fleisch" : "Knochen"), sel.join(", ")]);
+  });
+  const exs = Object.keys(c.ex).filter(k => c.ex[k] && LABEL[k]).map(k => LABEL[k]);
+  lines.push(["Extras", exs.length ? exs.join(", ") : "keine"]);
+  lines.push(["Dauer", v.time]);
+  $("#ticket").innerHTML = `<div class="ticket"><h3>★ Deine Bestellung ★</h3>${lines.map(([a, b]) => `<div class="ln"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join("")}</div>`;
+}
+
+/* ----- Einkauf ----- */
+function renderShop() {
+  const gs = groups();
+  let total = 0, done = 0;
+  gs.forEach(g => g.items.forEach(it => { total++; if (S.ing[S.v + ":" + it.id]) done++; }));
+  let h = pillHTML() + banner();
+  h += `<div class="progress"><div class="bar"><i style="width:${total ? done / total * 100 : 0}%"></i></div><small>${done} von ${total} abgehakt</small></div>`;
+  gs.forEach(g => {
+    h += `<div class="group"><h2>${g.title}</h2>${g.note ? `<p class="gnote">${g.note}</p>` : ""}`;
+    g.items.forEach(it => {
+      const key = S.v + ":" + it.id;
+      const label = it.free
+        ? `${esc(it.name)} <span class="opt">${it.free}${it.opt ? ", optional" : ""}</span>`
+        : `<b class="amt">${amtText(it, S.P)}</b> ${esc(itemName(it, S.P))}`;
+      h += `<button class="row" role="checkbox" aria-checked="${!!S.ing[key]}" data-ing="${key}"><span class="box">${CHECK}</span><span class="txt">${label}</span></button>`;
+    });
+    h += `</div>`;
+  });
+  h += `<button class="reset" data-reset="ing">Einkaufsliste zurücksetzen</button>`;
+  $("#tab-einkauf").innerHTML = h;
+}
+
+/* ----- Kochen ----- */
+function renderCook() {
+  const v = S.v, steps = STEPS[v];
+  let all = 0, ok = 0, h = pillHTML() + banner();
+  h += `<div class="info"><div><span>Portionen</span><span>${S.P}</span></div><div><span>Topf (mind.)</span><span>${pot()} Liter</span></div><div><span>Wasser (ca.)</span><span>${num(water())} Liter</span></div><div><span>Dauer</span><span>${VARS[v].time}</span></div></div>`;
+  let body = "", n = 0;
+  steps.forEach((st, si) => {
+    const items = st.items.map((it, ii) => ({ it, id: `${v}-${si}-${ii}` })).filter(x => !x.it.when || x.it.when());
+    if (!items.length) return;
+    n++;
+    const d = items.filter(x => S.step[x.id]).length;
+    all += items.length; ok += d;
+    body += `<div class="step${d === items.length ? " done" : ""}"><div class="step-head"><div class="num">${d === items.length ? "✓" : n}</div><h2>${st.title}</h2></div>`;
+    items.forEach(({ it, id }) => {
+      const txt = typeof it.t === "function" ? it.t() : it.t;
+      let tm = "";
+      if (it.timer) {
+        const def = typeof it.timer === "function" ? it.timer() : it.timer;
+        TIMERDEF[id] = def;
+        tm = `<span class="timer-wrap" data-wrap="${id}">${timerHTML(id, def)}</span>`;
+      }
+      body += `<div class="row" role="checkbox" tabindex="0" aria-checked="${!!S.step[id]}" data-step="${id}"><span class="box">${CHECK}</span><span class="txt">${esc(txt)}${tm}</span></div>`;
+    });
+    if (st.tip) body += `<div class="tip"><b>Tipp:</b> ${esc(st.tip)}</div>`;
+    body += `</div>`;
+  });
+  h += `<div class="progress"><div class="bar"><i style="width:${all ? ok / all * 100 : 0}%"></i></div><small>${ok} von ${all} Schritten erledigt</small></div>` + body;
+  h += (all && ok === all ? `<div class="final">Guten Appetit! 🍜</div>` : "") + `<button class="reset" data-reset="step">Zubereitung zurücksetzen</button>`;
+  $("#tab-kochen").innerHTML = h;
+}
+
+/* ----- Original ----- */
+function renderOriginal() {
+  const O = window.ORIGINAL || { de: "", en: "" };
+  $("#tab-original").innerHTML =
+    `<div class="banner orig">📜 <b>Das Rezept von Sarahs Tante, unverändert.</b> Der englische Text ist das Original, die deutsche Fassung ist die Übersetzung. Mengen- und Zeitangaben sind genau so, wie sie sie notiert hat.</div>` +
+    `<div class="lang" role="radiogroup"><button role="radio" aria-checked="${S.lang === "de"}" data-lang="de">Deutsch</button><button role="radio" aria-checked="${S.lang === "en"}" data-lang="en">English (Original)</button></div>` +
+    `<div class="orig-body" lang="${S.lang}">${O[S.lang] || ""}</div>`;
+}
+
+function renderAll() { renderOrder(); renderShop(); renderCook(); renderOriginal(); renderTimerbar(); }
+function renderDeps() { renderTicket(); renderShop(); renderCook(); }
+
+/* =====================================================================
+   Timer
+   ===================================================================== */
 function fmt(sec) {
   sec = Math.max(0, Math.round(sec));
   const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
   const mm = String(m).padStart(h ? 2 : 1, "0"), ss = String(s).padStart(2, "0");
   return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 }
-
-function timerHTML(id, label, dur) {
+function timerState(id, def) {
   const t = S.timers[id];
-  if (t && t.done) return `<button class="timer finished" data-timer="${id}">✓ ${label} fertig</button>`;
-  if (t && t.end) return `<button class="timer running" data-timer="${id}">⏱ ${label} · ${fmt((t.end - Date.now()) / 1000)}</button>`;
-  return `<button class="timer" data-timer="${id}">▶ ${label} · ${fmt(dur)}</button>`;
+  if (t && t.done) return { cls: "finished", text: `✓ ${def[0]} fertig` };
+  if (t && t.end) return { cls: "running", text: `⏱ ${def[0]} · ${fmt((t.end - Date.now()) / 1000)}` };
+  return { cls: "", text: `▶ ${def[0]} · ${fmt(def[1])}` };
 }
-
-function renderSteps() {
-  let all = 0, ok = 0, h = "";
-  STEPS.forEach((st, si) => {
-    const n = st.items.length;
-    const d = st.items.filter((_, ii) => S.step[`s${si}-${ii}`]).length;
-    all += n; ok += d;
-    h += `<div class="step${d === n ? " done" : ""}"><div class="step-head"><div class="num">${d === n ? "✓" : si + 1}</div><h2>${st.title}</h2></div>`;
-    st.items.forEach((it, ii) => {
-      const id = `s${si}-${ii}`;
-      h += `<div class="row" role="checkbox" tabindex="0" aria-checked="${!!S.step[id]}" data-step="${id}">
-              <span class="box">${CHECK}</span>
-              <span class="txt">${it.t}${it.timer ? `<span class="timer-wrap" data-wrap="${id}">${timerHTML(id, it.timer[0], it.timer[1])}</span>` : ""}</span>
-            </div>`;
-    });
-    if (st.tip) h += `<div class="tip"><b>Tipp:</b> ${st.tip}</div>`;
-    h += `</div>`;
-  });
-  const head = `<div class="progress"><div class="bar"><i style="width:${ok / all * 100}%"></i></div>
-                <small>${ok} von ${all} Schritten erledigt</small></div>`;
-  const foot = (ok === all ? `<div class="final">Guten Appetit! 🍜</div>` : "") +
-               `<button class="reset" data-reset="step">Zubereitung zurücksetzen</button>`;
-  $("#tab-schritte").innerHTML = head + h + foot;
-}
-
-/* ---------- Timer ---------- */
-function timerDef(id) {
-  const [si, ii] = id.slice(1).split("-").map(Number);
-  return STEPS[si].items[ii].timer;
+function timerHTML(id, def) {
+  const st = timerState(id, def);
+  return `<button class="timer ${st.cls}" data-timer="${id}">${esc(st.text)}</button>`;
 }
 function refreshTimer(id) {
-  const w = document.querySelector(`[data-wrap="${id}"]`);
-  if (w) { const d = timerDef(id); w.innerHTML = timerHTML(id, d[0], d[1]); }
+  const w = document.querySelector(`[data-wrap="${id}"]`), def = TIMERDEF[id];
+  if (!w || !def) return;
+  const st = timerState(id, def), b = w.firstElementChild;
+  if (b && b.className === `timer ${st.cls}`) b.textContent = st.text;
+  else w.innerHTML = timerHTML(id, def);
+}
+let tbKey = "";
+function renderTimerbar() {
+  const el = $("#timerbar"), ids = Object.keys(S.timers);
+  if (!ids.length) { el.hidden = true; el.innerHTML = ""; tbKey = ""; return; }
+  el.hidden = false;
+  const key = ids.map(i => i + (S.timers[i].done ? "!" : "")).join("|");
+  if (key !== tbKey) {
+    tbKey = key;
+    el.innerHTML = ids.map(i => {
+      const t = S.timers[i];
+      return t.done
+        ? `<button class="tchip fin" data-tdel="${i}">✓ ${esc(t.label)} fertig (ausblenden)</button>`
+        : `<button class="tchip" data-tgo="1" data-tt="${i}"></button>`;
+    }).join("");
+  }
+  ids.forEach(i => {
+    const t = S.timers[i], b = el.querySelector(`[data-tt="${i}"]`);
+    if (b && !t.done) b.textContent = `⏱ ${t.label} · ${fmt((t.end - Date.now()) / 1000)}`;
+  });
 }
 let audioCtx;
 function beep() {
@@ -339,17 +731,18 @@ function tick() {
   let changed = false;
   for (const id in S.timers) {
     const t = S.timers[id];
-    if (t.end && !t.done) {
-      if (now >= t.end) { t.done = true; changed = true; beep(); if (navigator.vibrate) navigator.vibrate([300, 150, 300]); }
-      refreshTimer(id);
-    }
+    if (t.end && !t.done && now >= t.end) { t.done = true; changed = true; beep(); if (navigator.vibrate) navigator.vibrate([300, 150, 300]); }
+    refreshTimer(id);
   }
   if (changed) save();
+  renderTimerbar();
 }
 setInterval(tick, 1000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { tick(); wakeReacquire(); } });
 
-/* ---------- Display anlassen ---------- */
+/* =====================================================================
+   Display anlassen
+   ===================================================================== */
 let wake = null;
 async function wakeReacquire() {
   if ($("#awake").getAttribute("aria-pressed") !== "true") return;
@@ -366,47 +759,108 @@ $("#awake").addEventListener("click", async e => {
   } catch (err) { btn.textContent = "Nicht möglich"; }
 });
 
-/* ---------- Events ---------- */
+/* =====================================================================
+   Ereignisse
+   ===================================================================== */
+function setP(p) {
+  S.P = Math.min(24, Math.max(1, p));
+  save(); renderDeps();
+}
+function toggleMulti(key, k) {
+  const c = cfg().ch;
+  c[key] = c[key] || {};
+  if (c[key][k]) {
+    const total = Object.values(c.fleisch || {}).filter(Boolean).length + Object.values(c.knochen || {}).filter(Boolean).length;
+    if (total <= 1) return;           // mindestens ein Fleischstück
+    delete c[key][k];
+  } else c[key][k] = 1;
+}
+
 document.addEventListener("click", e => {
-  const timer = e.target.closest("[data-timer]");
+  const t = e.target;
+  const timer = t.closest("[data-timer]");
   if (timer) {
     e.stopPropagation();
-    const id = timer.dataset.timer, t = S.timers[id], d = timerDef(id);
-    if (t) delete S.timers[id]; else S.timers[id] = { end: Date.now() + d[1] * 1000, done: false };
-    if (!t) { try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch (er) {} }
-    save(); refreshTimer(id); return;
+    const id = timer.dataset.timer, def = TIMERDEF[id];
+    if (S.timers[id]) delete S.timers[id];
+    else {
+      S.timers[id] = { end: Date.now() + def[1] * 1000, done: false, label: def[0] };
+      try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch (er) {}
+    }
+    save(); refreshTimer(id); renderTimerbar(); return;
   }
-  const ing = e.target.closest("[data-ing]");
-  if (ing) { S.ing[ing.dataset.ing] = !S.ing[ing.dataset.ing]; save(); renderIngredients(); return; }
-  const stp = e.target.closest("[data-step]");
-  if (stp) { S.step[stp.dataset.step] = !S.step[stp.dataset.step]; save(); renderSteps(); return; }
-  const rs = e.target.closest("[data-reset]");
+  const tdel = t.closest("[data-tdel]");
+  if (tdel) { const id = tdel.dataset.tdel; delete S.timers[id]; save(); renderTimerbar(); refreshTimer(id); return; }
+  if (t.closest("[data-tgo]")) { showTab("kochen"); return; }
+
+  const v = t.closest("[data-v]");
+  if (v) { S.v = v.dataset.v; save(); renderAll(); return; }
+  const p = t.closest("[data-p]");
+  if (p) { setP(S.P + Number(p.dataset.p)); renderOrder(); return; }
+  const nd = t.closest("[data-noodle]");
+  if (nd) { S.noodles = nd.dataset.noodle; save(); renderAll(); return; }
+  const rd = t.closest("[data-radio]");
+  if (rd) { const [k, val] = rd.dataset.radio.split(":"); cfg().ch[k] = val; save(); renderAll(); return; }
+  const mu = t.closest("[data-multi]");
+  if (mu) { const [k, val] = mu.dataset.multi.split(":"); toggleMulti(k, val); save(); renderAll(); return; }
+  const xe = t.closest("[data-ex]");
+  if (xe) { const k = xe.dataset.ex, c = cfg().ex; if (c[k]) delete c[k]; else c[k] = 1; save(); renderAll(); return; }
+
+  const ing = t.closest("[data-ing]");
+  if (ing) { const k = ing.dataset.ing; S.ing[k] = !S.ing[k]; save(); renderShop(); return; }
+  const stp = t.closest("[data-step]");
+  if (stp) { const k = stp.dataset.step; S.step[k] = !S.step[k]; save(); renderCook(); return; }
+  const rs = t.closest("[data-reset]");
   if (rs) {
     const what = rs.dataset.reset;
     if (!confirm(what === "ing" ? "Alle Zutaten wieder abwählen?" : "Zubereitung und Timer zurücksetzen?")) return;
-    if (what === "ing") { S.ing = {}; renderIngredients(); }
-    else { S.step = {}; S.timers = {}; renderSteps(); }
+    if (what === "ing") { S.ing = {}; renderShop(); }
+    else { S.step = {}; S.timers = {}; renderCook(); renderTimerbar(); }
     save(); return;
   }
-  const tab = e.target.closest("[data-tab]");
+  const lg = t.closest("[data-lang]");
+  if (lg) { S.lang = lg.dataset.lang; save(); renderOriginal(); return; }
+  const tab = t.closest("[data-tab]");
   if (tab) showTab(tab.dataset.tab);
 });
+document.addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches('div[role="checkbox"][data-step]')) {
+    e.preventDefault(); e.target.click();
+  }
+});
+document.addEventListener("input", e => {
+  if (e.target.id !== "pinput") return;
+  const n = parseInt(e.target.value, 10);
+  if (isNaN(n) || n < 1) return;       // beim Tippen darf das Feld kurz leer sein
+  S.P = Math.min(24, n); save(); renderDeps();
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "pinput") e.target.value = S.P;
+});
 
+const TABS = ["bestellen", "einkauf", "kochen", "original"];
 function showTab(name) {
+  if (!TABS.includes(name)) name = "bestellen";
   S.tab = name; save();
-  document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name));
-  $("#tab-zutaten").hidden = name !== "zutaten";
-  $("#tab-schritte").hidden = name !== "schritte";
+  $$("nav button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name));
+  TABS.forEach(t => { $("#tab-" + t).hidden = t !== name; });
   window.scrollTo(0, 0);
 }
 
-/* ---------- Start ---------- */
-renderIngredients();
-renderSteps();
-showTab(S.tab === "schritte" ? "schritte" : "zutaten");
+/* =====================================================================
+   Start
+   ===================================================================== */
+renderAll();
+showTab(S.tab);
 tick();
 
 if ("serviceWorker" in navigator) {
+  const had = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!had || reloaded) return;      // nur bei einem Update neu laden
+    reloaded = true; location.reload();
+  });
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
 </script>
