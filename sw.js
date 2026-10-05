@@ -1,4 +1,4 @@
-const CACHE = "pho-v3";
+const CACHE = "pho-v4";
 const FILES = [
   "./",
   "./index.html",

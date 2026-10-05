@@ -174,6 +174,7 @@
   .num { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 700; font-size: 15px; }
   .step.done .num { background: var(--ok); }
   .step-head h2 { margin: 0; font: 700 19px/1.2 ui-serif, "New York", Georgia, serif; }
+  .addtag { font-size: 11px; font-weight: 700; font-family: -apple-system, system-ui, sans-serif; color: var(--accent); background: var(--gold-soft); border-radius: 999px; padding: 2px 8px; vertical-align: middle; white-space: nowrap; }
   .tip { margin: 4px 16px 14px; padding: 10px 12px; background: var(--accent-soft); border-radius: 10px; font-size: 15px; }
   .tip b { color: var(--accent); }
   .timer {
@@ -279,8 +280,8 @@ const FREE = (id, name, free, o = {}) => ({ id, name, free, ...o });
    ===================================================================== */
 const KEY = "pho.v2";
 const CH_DEF = {
-  huhn: { cut: "keule" },
-  rind: { fleisch: { brust: 1 }, knochen: { ochsen: 1 } },
+  huhn: { cut: "keule", brothVeg: {}, topVeg: {} },
+  rind: { fleisch: { brust: 1 }, knochen: { ochsen: 1 }, brothVeg: {}, topVeg: {} },
   tofu: { brothVeg: { daikon: 1, karotte: 1, shiitake: 1, champ: 1 }, topVeg: {} }
 };
 let S = { v: "huhn", P: 2, noodles: "dry", cfg: {}, ing: {}, step: {}, timers: {}, tab: "bestellen", lang: "de" };
@@ -296,7 +297,7 @@ function cfg(v = S.v) {
 const ex = k => !!cfg().ex[k];
 if (!CH_DEF[S.v]) S.v = "huhn";
 if (!(S.P >= 1 && S.P <= 24)) S.P = 2;
-if (S.ver !== 3) { S.ver = 3; S.step = {}; S.ing = {}; S.timers = {}; }
+if (S.ver !== 4) { S.ver = 4; S.step = {}; S.ing = {}; S.timers = {}; }
 
 /* =====================================================================
    Rezeptdaten
@@ -319,16 +320,19 @@ const CHOICES = {
       ["ochsen", "Ochsenschwanz"], ["hals", "Rinderhalsknochen"], ["srMit", "Short Ribs mit Knochen"] ],
       hint: "Suppenknochen (Mark- und Gelenkknochen) sind immer dabei. Wähle insgesamt mindestens ein Fleischstück." }
   ],
-  tofu: [
-    { key: "brothVeg", title: "Gemüse für die Brühe", type: "multi", opts: [
-      ["daikon", "Daikon (weißer Rettich)"], ["karotte", "Karotten"], ["shiitake", "Shiitake (getrocknet)"],
-      ["champ", "Champignons"], ["mais", "Mais (Kolben)"], ["kohl", "Chinakohl"] ],
-      hint: "Gemüse macht die Brühe aromatischer und süßlicher. Shiitake bringen viel Umami." },
-    { key: "topVeg", title: "Gemüse in der Schüssel", type: "multi", opts: [
-      ["pakchoi", "Pak Choi"], ["brokkoli", "Brokkoli"], ["zucker", "Zuckerschoten"], ["spinat", "Babyspinat"] ],
-      hint: "Wird extra in der Brühe gegart, Babyspinat wird roh in die Schüssel gegeben." }
-  ]
+  tofu: []
 };
+const vegCh = (tofu, hint) => [
+  { key: "brothVeg", title: tofu ? "Gemüse für die Brühe" : "Gemüse für die Brühe (optional)", type: "multi", opts: [
+    ["daikon", "Daikon (weißer Rettich)"], ["karotte", "Karotten"], ["shiitake", "Shiitake (getrocknet)"],
+    ["champ", "Champignons"], ["mais", "Mais (Kolben)"], ["kohl", "Chinakohl"] ], hint },
+  { key: "topVeg", title: tofu ? "Gemüse in der Schüssel" : "Gemüse in der Schüssel (optional)", type: "multi", opts: [
+    ["pakchoi", "Pak Choi"], ["brokkoli", "Brokkoli"], ["zucker", "Zuckerschoten"], ["spinat", "Babyspinat"] ],
+    hint: "Wird extra in der heißen Brühe gegart, Babyspinat kommt roh in die Schüssel." }
+];
+CHOICES.huhn.push(...vegCh(false, "Zusätzlich zu Zwiebel und Ingwer. Kommt erst später in die Brühe, damit es nicht zerkocht."));
+CHOICES.rind.push(...vegCh(false, "Im Original der Tante kommt kein Gemüse in die Brühe. Es wird erst in der letzten Stunde dazugegeben."));
+CHOICES.tofu.push(...vegCh(true, "Gemüse macht die Brühe aromatischer und süßlicher. Shiitake bringen viel Umami."));
 const EXTRAS = (v) => [
   ...(v === "rind" ? [{ title: "Fleisch-Toppings", items: [["raw", "🥩", "Rohe Rindfleischscheiben"], ["balls", "🧆", "Rindfleischbällchen (bò viên)"], ["tendon", "🦴", "Rindersehnen"], ["tripe", "🍖", "Kutteln"]] }] : []),
   { title: "Frische Beilagen", items: [["basil", "🌿", "Thai-Basilikum"], ["sprouts", "🌱", "Sojabohnensprossen"], ["lime", "🍋", "Limette"]] },
@@ -340,7 +344,7 @@ Object.keys(VARS).forEach(v => EXTRAS(v).forEach(g => g.items.forEach(([k, , l])
 const CHL = { cut: { keule: "Keulen", ganz: "Ganzes Suppenhuhn" }, fleisch: { brust: "Brust", flanke: "Flanke", srOhne: "Short Ribs o. K.", chuck: "Rinderschulter" }, knochen: { ochsen: "Ochsenschwanz", hals: "Halsknochen", srMit: "Short Ribs m. K." },
   brothVeg: { daikon: "Rettich", karotte: "Karotten", shiitake: "Shiitake", champ: "Champignons", mais: "Mais", kohl: "Chinakohl" },
   topVeg: { pakchoi: "Pak Choi", brokkoli: "Brokkoli", zucker: "Zuckerschoten", spinat: "Babyspinat" } };
-const SHORT = { fleisch: "Fleisch", knochen: "Knochen", brothVeg: "Brühe", topVeg: "Beilage" };
+const SHORT = { fleisch: "Fleisch", knochen: "Knochen", brothVeg: "Gemüse (Brühe)", topVeg: "Gemüse (Schüssel)" };
 
 function water() { return Math.max(1.5, Math.ceil(VARS[S.v].wl * S.P * 2) / 2); }
 function pot() { return Math.max(3, Math.ceil(water() * 1.3)); }
@@ -435,7 +439,7 @@ function groups() {
       I("t-oel", "Neutrales Öl zum Braten", 1, "TL", { step: 0.5, min: 1 })
     ] };
   }
-  const vegG = v === "tofu" ? [vegGroup()] : [];
+  const vegG = [vegGroup()];
   return [first, ...vegG, noodleGroup(), freshGroup(), spiceGroup(v === "huhn"), seasonGroup(v === "tofu"), sauceGroup()].filter(g => g.items.length);
 }
 
@@ -477,6 +481,25 @@ const tv = k => !!(cfg().ch.brothVeg || {})[k];
 const tt = k => !!(cfg().ch.topVeg || {})[k];
 const hasCooked = () => ["pakchoi", "brokkoli", "zucker"].some(tt);
 
+const brothAdd = () => [
+  ...["daikon", "karotte", "champ", "mais", "kohl"].filter(tv).map(k => CHL.brothVeg[k]),
+  ...(tv("shiitake") ? ["die eingeweichten Shiitake (samt abgeseihtem Einweichwasser, ohne Bodensatz)"] : [])
+];
+const anyBroth = () => brothAdd().length > 0;
+const sfx = () => VARS[S.v].origin ? " (Ergänzung)" : "";
+const SPINAT = { t: () => "Babyspinat zuerst in die Schüssel geben. Die heiße Brühe lässt ihn zusammenfallen." + sfx(), when: () => tt("spinat") };
+const VEG = {
+  prep: { title: "Gemüse und Pilze vorbereiten", add: true, items: [
+      { t: "Getrocknete Shiitake in lauwarmem Wasser einweichen. Das Einweichwasser aufheben.", timer: ["Shiitake einweichen", 20 * 60], when: () => tv("shiitake") },
+      { t: () => joinDe(["daikon", "karotte"].filter(tv).map(k => CHL.brothVeg[k])) + " schälen und in grobe Stücke schneiden.", when: () => tv("daikon") || tv("karotte") },
+      { t: "Maiskolben in 2 bis 3 Stücke teilen.", when: () => tv("mais") },
+      { t: "Chinakohl grob schneiden.", when: () => tv("kohl") },
+      { t: "Frische Champignons halbieren, große Pilze vierteln.", when: () => tv("champ") } ] },
+  cook: { title: "Gemüse für die Schüssel garen", add: true, items: [
+      { t: () => joinDe(["brokkoli", "pakchoi", "zucker"].filter(tt).map(k => CHL.topVeg[k])) + " putzen und in mundgerechte Stücke schneiden" + (() => { const x = [tt("brokkoli") && "Brokkoli in Röschen", tt("pakchoi") && "Pak Choi halbieren"].filter(Boolean); return x.length ? " (" + x.join(", ") + ")" : ""; })() + ".", when: hasCooked },
+      { t: () => "In der heißen, gewürzten Brühe nacheinander bissfest garen: " + joinDe([tt("brokkoli") && "Brokkoli ca. 3 Minuten", tt("pakchoi") && "Pak Choi ca. 2 Minuten", tt("zucker") && "Zuckerschoten ca. 1 bis 2 Minuten"].filter(Boolean)) + ". Mit der Schaumkelle herausnehmen.", when: hasCooked } ] }
+};
+
 const STEPS = {
   rind: [
     { title: "Knochen und Fleisch vorbereiten", items: [
@@ -490,6 +513,7 @@ const STEPS = {
       { t: () => `Mit Wasser auffüllen (ca. ${num(water())} Liter), zum Kochen bringen und dann auf kleine Hitze schalten, sodass die Brühe sanft simmert.` },
       { t: "Etwa 3 Stunden köcheln lassen. Manche kochen noch länger, aber drei Stunden reichen, um alle Aromen aus den Knochen zu ziehen.", timer: ["Köcheln", 3 * 3600] },
       { t: "Nach der ersten Stunde die Unreinheiten abschöpfen, die an die Oberfläche steigen, und wegwerfen. Falls dabei lose Gewürze mit abgeschöpft werden, ist das nicht schlimm: Sie haben ihre Arbeit dann schon getan." },
+      { t: () => "Wenn die Brühe etwa 2 Stunden gekocht hat (für die letzte Stunde): " + joinDe(brothAdd()) + " in den Topf geben, damit sie nicht zerkochen." + sfx(), when: anyBroth },
       { t: "Reine Fleischstücke (Brust, Flanke, Short Ribs ohne Knochen, Rinderschulter) herausnehmen, sobald sie stäbchenzart sind: nach ca. 45 Minuten.", timer: ["Fleisch", 45 * 60], when: hasMeatOnly },
       { t: "Größere Short Ribs mit Knochen herausnehmen, sobald sie stäbchenzart sind: nach ca. 1 Stunde 45 Minuten.", timer: ["Short Ribs", 105 * 60], when: hasSrMit },
       { t: "Ochsenschwanz und Halsknochen ebenfalls herausnehmen, sobald das Fleisch stäbchenzart ist. Dafür nennt das Original keine Zeit: einfach mit der Gabel testen. (Ergänzung)", when: hasMeatyBones },
@@ -500,7 +524,8 @@ const STEPS = {
       { t: "Würzzutaten nach und nach hinzufügen und dabei abschmecken." } ], tip: seasonTip },
     A.noodle,
     { title: "Schüsseln anrichten", items: [
-      { t: "Nudeln und aufgeschnittenes gegartes Fleisch in eine Schüssel geben." },
+      SPINAT,
+      { t: () => "Nudeln und aufgeschnittenes gegartes Fleisch" + (hasCooked() ? " und das gegarte Gemüse" : "") + " in eine Schüssel geben." },
       { t: "Rohe Rindfleischscheiben obenauf legen. Die heiße Brühe gart sie sofort.", when: () => ex("raw") },
       { t: "Die heiße Brühe darübergießen." },
       { t: () => toppings() },
@@ -522,24 +547,21 @@ const STEPS = {
           : "Keulen: nach ca. 30 bis 40 Minuten prüfen, ob sie gar sind. An der dicksten Stelle muss klarer Saft austreten.",
         timer: () => cfg().ch.cut === "ganz" ? ["Huhn gar?", 50 * 60] : ["Keulen gar?", 40 * 60] },
       { t: "Hähnchen herausnehmen und kurz in Eiswasser legen, damit das Fleisch saftig und fest bleibt. Danach das Fleisch von den Knochen lösen und in Streifen zupfen oder schneiden." },
+      { t: () => "Jetzt " + joinDe(brothAdd()) + " in den Topf geben, damit sie nicht zerkochen.", when: anyBroth },
       { t: "Knochen (und nach Wunsch die Haut) zurück in den Topf geben und weiterköcheln lassen. Insgesamt ca. 1½ Stunden Kochzeit.", timer: ["Weiterköcheln", 50 * 60] } ] },
     A.strain,
     { title: "Brühe würzen", items: [
       { t: "Fischsauce, Salz und Zucker nach und nach hinzufügen und dabei abschmecken." } ], tip: seasonTip },
     A.noodle,
     { title: "Schüsseln anrichten", items: [
-      { t: "Nudeln und gezupftes Hähnchen in eine Schüssel geben." },
+      SPINAT,
+      { t: () => "Nudeln und gezupftes Hähnchen" + (hasCooked() ? " und das gegarte Gemüse" : "") + " in eine Schüssel geben." },
       { t: "Die heiße Brühe darübergießen." },
       { t: () => toppings() },
       { t: () => saucesLine(), when: () => !!saucesLine() } ] }
   ],
   tofu: [
-    { title: "Gemüse und Pilze vorbereiten", items: [
-      { t: "Getrocknete Shiitake in lauwarmem Wasser einweichen. Das Einweichwasser aufheben.", timer: ["Shiitake einweichen", 20 * 60], when: () => tv("shiitake") },
-      { t: () => joinDe(["daikon", "karotte"].filter(tv).map(k => CHL.brothVeg[k])) + " schälen und in grobe Stücke schneiden.", when: () => tv("daikon") || tv("karotte") },
-      { t: "Maiskolben in 2 bis 3 Stücke teilen.", when: () => tv("mais") },
-      { t: "Chinakohl grob schneiden.", when: () => tv("kohl") },
-      { t: "Frische Champignons halbieren, große Pilze vierteln.", when: () => tv("champ") } ] },
+    VEG.prep,
     A.aroma, A.spice,
     { title: "Gemüsebrühe kochen", items: [
       { t: () => joinDe(["Aromaten", "Gewürze", ...["daikon", "karotte", "champ", "mais", "kohl"].filter(tv).map(k => CHL.brothVeg[k])]) + ` in den Topf geben und mit ca. ${num(water())} Liter Wasser auffüllen.` },
@@ -555,9 +577,7 @@ const STEPS = {
     { title: "Brühe würzen", items: [
       { t: "Sojasauce, Salz und Zucker nach und nach hinzufügen und dabei abschmecken." } ],
       tip: "Ohne Fischsauce braucht die Brühe etwas mehr Salz und Sojasauce. Ruhig mehrfach abschmecken. " + seasonTip },
-    { title: "Gemüse für die Schüssel garen", items: [
-      { t: () => joinDe(["brokkoli", "pakchoi", "zucker"].filter(tt).map(k => CHL.topVeg[k])) + " putzen und in mundgerechte Stücke schneiden (Brokkoli in Röschen, Pak Choi halbieren).", when: hasCooked },
-      { t: () => "In der heißen, gewürzten Brühe nacheinander bissfest garen: " + joinDe([tt("brokkoli") && "Brokkoli ca. 3 Minuten", tt("pakchoi") && "Pak Choi ca. 2 Minuten", tt("zucker") && "Zuckerschoten ca. 1 bis 2 Minuten"].filter(Boolean)) + ". Mit der Schaumkelle herausnehmen.", when: hasCooked } ] },
+    VEG.cook,
     A.noodle,
     { title: "Schüsseln anrichten", items: [
       { t: "Babyspinat zuerst in die Schüssel geben. Die heiße Brühe lässt ihn zusammenfallen.", when: () => tt("spinat") },
@@ -567,6 +587,12 @@ const STEPS = {
       { t: () => saucesLine(), when: () => !!saucesLine() } ] }
   ]
 };
+
+["rind", "huhn"].forEach(v => {
+  const arr = STEPS[v];
+  arr.splice(arr.indexOf(A.spice) + 1, 0, VEG.prep);
+  arr.splice(arr.findIndex(st => st.title === "Brühe würzen") + 1, 0, VEG.cook);
+});
 
 /* =====================================================================
    Darstellung
@@ -580,7 +606,7 @@ function orderSummaryText() {
 }
 function banner() {
   return VARS[S.v].origin
-    ? `<div class="banner orig">🏅 <b>Original von Sarahs Tante (New York).</b> Texte und Zeiten stammen von ihr. Mengen sind Richtwerte, denn im Original stehen keine.</div>`
+    ? `<div class="banner orig">🏅 <b>Original von Sarahs Tante (New York).</b> Texte und Zeiten stammen von ihr. Mengen sind Richtwerte, denn im Original stehen keine. Alles, was du zusätzlich wählst (z. B. Gemüse), ist als Ergänzung markiert.</div>`
     : `<div class="banner adapt">✏️ <b>Angepasste Version, nicht von der Tante.</b> Das Grundprinzip (Aromaten und Gewürze rösten, abschäumen, würzen) ist aus ihrem Rezept übernommen. Zutaten, Zeiten und Mengen sind Ergänzungen und Richtwerte. Ihr Rezept steht unverändert unter „Original“.</div>`;
 }
 function pillHTML() {
@@ -671,7 +697,7 @@ function renderCook() {
     n++;
     const d = items.filter(x => S.step[x.id]).length;
     all += items.length; ok += d;
-    body += `<div class="step${d === items.length ? " done" : ""}"><div class="step-head"><div class="num">${d === items.length ? "✓" : n}</div><h2>${st.title}</h2></div>`;
+    body += `<div class="step${d === items.length ? " done" : ""}"><div class="step-head"><div class="num">${d === items.length ? "✓" : n}</div><h2>${st.title}${st.add && VARS[v].origin ? ' <span class="addtag">Ergänzung</span>' : ""}</h2></div>`;
     items.forEach(({ it, id }) => {
       const txt = typeof it.t === "function" ? it.t() : it.t;
       let tm = "";
