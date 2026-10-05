@@ -281,18 +281,22 @@ const KEY = "pho.v2";
 const CH_DEF = {
   huhn: { cut: "keule" },
   rind: { fleisch: { brust: 1 }, knochen: { ochsen: 1 } },
-  tofu: {}
+  tofu: { brothVeg: { daikon: 1, karotte: 1, shiitake: 1, champ: 1 }, topVeg: {} }
 };
 let S = { v: "huhn", P: 2, noodles: "dry", cfg: {}, ing: {}, step: {}, timers: {}, tab: "bestellen", lang: "de" };
 try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 function cfg(v = S.v) {
-  if (!S.cfg[v]) S.cfg[v] = { ch: JSON.parse(JSON.stringify(CH_DEF[v])), ex: { basil: 1, sprouts: 1, lime: 1, hoisin: 1, sriracha: 1 } };
-  return S.cfg[v];
+  if (!S.cfg[v]) S.cfg[v] = { ch: {}, ex: { basil: 1, sprouts: 1, lime: 1, hoisin: 1, sriracha: 1 } };
+  const c = S.cfg[v];
+  c.ch = c.ch || {};
+  Object.keys(CH_DEF[v]).forEach(k => { if (c.ch[k] === undefined) c.ch[k] = JSON.parse(JSON.stringify(CH_DEF[v][k])); });
+  return c;
 }
 const ex = k => !!cfg().ex[k];
 if (!CH_DEF[S.v]) S.v = "huhn";
 if (!(S.P >= 1 && S.P <= 24)) S.P = 2;
+if (S.ver !== 3) { S.ver = 3; S.step = {}; S.ing = {}; S.timers = {}; }
 
 /* =====================================================================
    Rezeptdaten
@@ -315,7 +319,15 @@ const CHOICES = {
       ["ochsen", "Ochsenschwanz"], ["hals", "Rinderhalsknochen"], ["srMit", "Short Ribs mit Knochen"] ],
       hint: "Suppenknochen (Mark- und Gelenkknochen) sind immer dabei. Wähle insgesamt mindestens ein Fleischstück." }
   ],
-  tofu: []
+  tofu: [
+    { key: "brothVeg", title: "Gemüse für die Brühe", type: "multi", opts: [
+      ["daikon", "Daikon (weißer Rettich)"], ["karotte", "Karotten"], ["shiitake", "Shiitake (getrocknet)"],
+      ["champ", "Champignons"], ["mais", "Mais (Kolben)"], ["kohl", "Chinakohl"] ],
+      hint: "Gemüse macht die Brühe aromatischer und süßlicher. Shiitake bringen viel Umami." },
+    { key: "topVeg", title: "Gemüse in der Schüssel", type: "multi", opts: [
+      ["pakchoi", "Pak Choi"], ["brokkoli", "Brokkoli"], ["zucker", "Zuckerschoten"], ["spinat", "Babyspinat"] ],
+      hint: "Wird extra in der Brühe gegart, Babyspinat wird roh in die Schüssel gegeben." }
+  ]
 };
 const EXTRAS = (v) => [
   ...(v === "rind" ? [{ title: "Fleisch-Toppings", items: [["raw", "🥩", "Rohe Rindfleischscheiben"], ["balls", "🧆", "Rindfleischbällchen (bò viên)"], ["tendon", "🦴", "Rindersehnen"], ["tripe", "🍖", "Kutteln"]] }] : []),
@@ -325,7 +337,10 @@ const EXTRAS = (v) => [
 ];
 const LABEL = {};
 Object.keys(VARS).forEach(v => EXTRAS(v).forEach(g => g.items.forEach(([k, , l]) => LABEL[k] = l)));
-const CHL = { cut: { keule: "Keulen", ganz: "Ganzes Suppenhuhn" }, fleisch: { brust: "Brust", flanke: "Flanke", srOhne: "Short Ribs o. K.", chuck: "Rinderschulter" }, knochen: { ochsen: "Ochsenschwanz", hals: "Halsknochen", srMit: "Short Ribs m. K." } };
+const CHL = { cut: { keule: "Keulen", ganz: "Ganzes Suppenhuhn" }, fleisch: { brust: "Brust", flanke: "Flanke", srOhne: "Short Ribs o. K.", chuck: "Rinderschulter" }, knochen: { ochsen: "Ochsenschwanz", hals: "Halsknochen", srMit: "Short Ribs m. K." },
+  brothVeg: { daikon: "Rettich", karotte: "Karotten", shiitake: "Shiitake", champ: "Champignons", mais: "Mais", kohl: "Chinakohl" },
+  topVeg: { pakchoi: "Pak Choi", brokkoli: "Brokkoli", zucker: "Zuckerschoten", spinat: "Babyspinat" } };
+const SHORT = { fleisch: "Fleisch", knochen: "Knochen", brothVeg: "Brühe", topVeg: "Beilage" };
 
 function water() { return Math.max(1.5, Math.ceil(VARS[S.v].wl * S.P * 2) / 2); }
 function pot() { return Math.max(3, Math.ceil(water() * 1.3)); }
@@ -377,6 +392,20 @@ function sauceGroup() {
     ...(ex("sriracha") ? [FREE("x-sriracha", "Sriracha oder andere Chilisauce", "nach Geschmack")] : [])
   ] };
 }
+function vegGroup() {
+  const b = cfg().ch.brothVeg || {}, t = cfg().ch.topVeg || {}, items = [];
+  if (b.daikon) items.push(I("t-daikon", "Daikon (weißer Rettich)", 80, "g", { step: 10, min: 80 }));
+  if (b.karotte) items.push(I("t-karotte", "Karotten", 50, "g", { step: 10, min: 50 }));
+  if (b.shiitake) items.push(I("t-shiitake", "Getrocknete Shiitake", 5, "g", { step: 5, min: 10 }));
+  if (b.champ) items.push(I("t-champ", "Frische Champignons (oder Kräuterseitlinge)", 50, "g", { step: 25, min: 50 }));
+  if (b.mais) items.push(I("t-mais", "Maiskolben", 0.25, "Stk", { step: 0.5, min: 0.5 }));
+  if (b.kohl) items.push(I("t-kohl", "Chinakohl", 60, "g", { step: 20, min: 60 }));
+  if (t.pakchoi) items.push(I("t-pakchoi", "Pak Choi", 80, "g", { step: 20, min: 80 }));
+  if (t.brokkoli) items.push(I("t-brokkoli", "Brokkoli", 70, "g", { step: 10, min: 70 }));
+  if (t.zucker) items.push(I("t-zucker", "Zuckerschoten", 50, "g", { step: 10, min: 50 }));
+  if (t.spinat) items.push(I("t-spinat", "Babyspinat", 30, "g", { step: 10, min: 30 }));
+  return { title: "Gemüse & Pilze", note: "Deine Auswahl für Brühe und Schüssel.", items };
+}
 function groups() {
   const v = S.v, c = cfg().ch;
   let first;
@@ -401,18 +430,13 @@ function groups() {
       ...(ex("tripe") ? [I("r-tripe", "Rindermagen (Kutteln)", 50, "g", { step: 10, min: 50 })] : [])
     ] };
   } else {
-    first = { title: "Tofu & Pilze", items: [
+    first = { title: "Tofu", items: [
       I("t-tofu", "Tofu, fest (natur)", 125, "g", { step: 25, min: 125 }),
-      I("t-shiitake", "Getrocknete Shiitake", 5, "g", { step: 5, min: 10 }),
-      I("t-champ", "Frische Champignons (oder Kräuterseitlinge)", 50, "g", { step: 25, min: 50 }),
       I("t-oel", "Neutrales Öl zum Braten", 1, "TL", { step: 0.5, min: 1 })
     ] };
   }
-  const veg = v === "tofu" ? [
-    I("t-daikon", "Daikon (weißer Rettich)", 80, "g", { step: 10, min: 80 }),
-    I("t-karotte", "Karotten", 50, "g", { step: 10, min: 50 })
-  ] : [];
-  return [first, noodleGroup(), freshGroup(veg), spiceGroup(v === "huhn"), seasonGroup(v === "tofu"), sauceGroup()].filter(g => g.items.length);
+  const vegG = v === "tofu" ? [vegGroup()] : [];
+  return [first, ...vegG, noodleGroup(), freshGroup(), spiceGroup(v === "huhn"), seasonGroup(v === "tofu"), sauceGroup()].filter(g => g.items.length);
 }
 
 /* ---------- Zubereitung ---------- */
@@ -449,6 +473,9 @@ const seasonTip = "Die Brühe soll ausgewogen, herzhaft und leicht süßlich sei
 const hasMeatOnly = () => Object.values(cfg().ch.fleisch || {}).some(Boolean);
 const hasSrMit = () => !!(cfg().ch.knochen || {}).srMit;
 const hasMeatyBones = () => !!((cfg().ch.knochen || {}).ochsen || (cfg().ch.knochen || {}).hals);
+const tv = k => !!(cfg().ch.brothVeg || {})[k];
+const tt = k => !!(cfg().ch.topVeg || {})[k];
+const hasCooked = () => ["pakchoi", "brokkoli", "zucker"].some(tt);
 
 const STEPS = {
   rind: [
@@ -508,11 +535,15 @@ const STEPS = {
   ],
   tofu: [
     { title: "Gemüse und Pilze vorbereiten", items: [
-      { t: "Getrocknete Shiitake in lauwarmem Wasser einweichen. Das Einweichwasser aufheben.", timer: ["Shiitake einweichen", 20 * 60] },
-      { t: "Rettich und Karotten schälen und in grobe Stücke schneiden. Frische Pilze halbieren." } ] },
+      { t: "Getrocknete Shiitake in lauwarmem Wasser einweichen. Das Einweichwasser aufheben.", timer: ["Shiitake einweichen", 20 * 60], when: () => tv("shiitake") },
+      { t: () => joinDe(["daikon", "karotte"].filter(tv).map(k => CHL.brothVeg[k])) + " schälen und in grobe Stücke schneiden.", when: () => tv("daikon") || tv("karotte") },
+      { t: "Maiskolben in 2 bis 3 Stücke teilen.", when: () => tv("mais") },
+      { t: "Chinakohl grob schneiden.", when: () => tv("kohl") },
+      { t: "Frische Champignons halbieren, große Pilze vierteln.", when: () => tv("champ") } ] },
     A.aroma, A.spice,
     { title: "Gemüsebrühe kochen", items: [
-      { t: () => `Aromaten, Gewürze, Rettich, Karotten und Pilze in den Topf geben. Eingeweichte Shiitake samt abgeseihtem Einweichwasser dazugeben und mit ca. ${num(water())} Liter Wasser auffüllen.` },
+      { t: () => joinDe(["Aromaten", "Gewürze", ...["daikon", "karotte", "champ", "mais", "kohl"].filter(tv).map(k => CHL.brothVeg[k])]) + ` in den Topf geben und mit ca. ${num(water())} Liter Wasser auffüllen.` },
+      { t: "Eingeweichte Shiitake samt abgeseihtem Einweichwasser dazugeben. Den Bodensatz im Wasser zurücklassen.", when: () => tv("shiitake") },
       { t: "Zum Kochen bringen, dann auf kleine Hitze schalten und sanft simmern lassen." },
       { t: "Etwa 1 Stunde köcheln lassen. Falls Schaum aufsteigt, abschöpfen.", timer: ["Köcheln", 3600] } ] },
     { title: "Tofu braten", items: [
@@ -524,9 +555,13 @@ const STEPS = {
     { title: "Brühe würzen", items: [
       { t: "Sojasauce, Salz und Zucker nach und nach hinzufügen und dabei abschmecken." } ],
       tip: "Ohne Fischsauce braucht die Brühe etwas mehr Salz und Sojasauce. Ruhig mehrfach abschmecken. " + seasonTip },
+    { title: "Gemüse für die Schüssel garen", items: [
+      { t: () => joinDe(["brokkoli", "pakchoi", "zucker"].filter(tt).map(k => CHL.topVeg[k])) + " putzen und in mundgerechte Stücke schneiden (Brokkoli in Röschen, Pak Choi halbieren).", when: hasCooked },
+      { t: () => "In der heißen, gewürzten Brühe nacheinander bissfest garen: " + joinDe([tt("brokkoli") && "Brokkoli ca. 3 Minuten", tt("pakchoi") && "Pak Choi ca. 2 Minuten", tt("zucker") && "Zuckerschoten ca. 1 bis 2 Minuten"].filter(Boolean)) + ". Mit der Schaumkelle herausnehmen.", when: hasCooked } ] },
     A.noodle,
     { title: "Schüsseln anrichten", items: [
-      { t: "Nudeln und gebratenen Tofu in eine Schüssel geben." },
+      { t: "Babyspinat zuerst in die Schüssel geben. Die heiße Brühe lässt ihn zusammenfallen.", when: () => tt("spinat") },
+      { t: () => "Nudeln, gebratenen Tofu" + (hasCooked() ? " und das gegarte Gemüse" : "") + " in die Schüssel geben." },
       { t: "Die heiße Brühe darübergießen." },
       { t: () => toppings() },
       { t: () => saucesLine(), when: () => !!saucesLine() } ] }
@@ -594,7 +629,7 @@ function renderTicket() {
   lines.push(["Nudeln", S.noodles === "dry" ? "getrocknet" : "frisch"]);
   CHOICES[S.v].forEach(ch => {
     const sel = ch.type === "radio" ? [CHL[ch.key][c.ch[ch.key]]] : Object.keys(c.ch[ch.key] || {}).filter(k => c.ch[ch.key][k]).map(k => CHL[ch.key][k]);
-    if (sel.length) lines.push([ch.type === "radio" ? "Auswahl" : (ch.key === "fleisch" ? "Fleisch" : "Knochen"), sel.join(", ")]);
+    if (sel.length) lines.push([SHORT[ch.key] || "Auswahl", sel.join(", ")]);
   });
   const exs = Object.keys(c.ex).filter(k => c.ex[k] && LABEL[k]).map(k => LABEL[k]);
   lines.push(["Extras", exs.length ? exs.join(", ") : "keine"]);
@@ -770,8 +805,10 @@ function toggleMulti(key, k) {
   const c = cfg().ch;
   c[key] = c[key] || {};
   if (c[key][k]) {
-    const total = Object.values(c.fleisch || {}).filter(Boolean).length + Object.values(c.knochen || {}).filter(Boolean).length;
-    if (total <= 1) return;           // mindestens ein Fleischstück
+    if (key === "fleisch" || key === "knochen") {
+      const total = Object.values(c.fleisch || {}).filter(Boolean).length + Object.values(c.knochen || {}).filter(Boolean).length;
+      if (total <= 1) return;         // mindestens ein Fleischstück
+    }
     delete c[key][k];
   } else c[key][k] = 1;
 }
